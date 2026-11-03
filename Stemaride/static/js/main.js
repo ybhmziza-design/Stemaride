@@ -74,87 +74,54 @@ function onCategoryChanged() {
     const category = selectedRadio.value;
 
     const promptCycling = document.getElementById('prompt-cycling');
+    const promptSkating = document.getElementById('prompt-skating');
     const promptGroup = document.getElementById('prompt-group-of-3');
     const promptWalking = document.getElementById('prompt-walking');
-    const hireAddonContainer = document.getElementById('prompt-hire-details');
     const heading = document.getElementById('prompt-heading');
 
-    // Hide all first
-    promptCycling.classList.add('hidden');
-    promptGroup.classList.add('hidden');
-    promptWalking.classList.add('hidden');
+    // Hide all prompts first
+    if (promptCycling) promptCycling.classList.add('hidden');
+    if (promptSkating) promptSkating.classList.add('hidden');
+    if (promptGroup) promptGroup.classList.add('hidden');
+    if (promptWalking) promptWalking.classList.add('hidden');
 
-    // Default rates
     let basePrice = 700;
-    let label = "Cycling (Individual)";
+    let label = "Cycling Individual";
 
     if (category === 'cycling') {
-        promptCycling.classList.remove('hidden');
-        heading.innerText = "Cycling Route & Gear Options";
+        if (promptCycling) promptCycling.classList.remove('hidden');
+        if (heading) heading.innerText = "Cycling Route & Distance Options";
         basePrice = 700;
         label = "Cycling Individual";
-        hireAddonContainer.classList.remove('hidden');
+    } else if (category === 'skating') {
+        if (promptSkating) promptSkating.classList.remove('hidden');
+        if (heading) heading.innerText = "Skating Loop & Gear Confirmation";
+        basePrice = 500;
+        label = "Roller / Inline Skating";
     } else if (category === 'group_of_3') {
-        promptGroup.classList.remove('hidden');
-        heading.innerText = "Group of 3 Participants Registration";
+        if (promptGroup) promptGroup.classList.remove('hidden');
+        if (heading) heading.innerText = "Group of 3 Participants Registration";
         basePrice = 1500;
-        label = "Group of 3 (Team)";
-        hireAddonContainer.classList.remove('hidden');
+        label = "Group of 3 (Squad)";
     } else if (category === 'walking') {
-        promptWalking.classList.remove('hidden');
-        heading.innerText = "Walking Route & Pace Preferences";
+        if (promptWalking) promptWalking.classList.remove('hidden');
+        if (heading) heading.innerText = "Walking Route & Pace Preferences";
         basePrice = 500;
         label = "Walking Category";
-        hireAddonContainer.classList.remove('hidden');
-    } else if (category === 'hire_only') {
-        heading.innerText = "Equipment Hire Specifications";
-        basePrice = 500;
-        label = "Gear Hire for the Day";
-        // When hire_only is chosen, force hire to be true
-        const hireCheck = document.getElementById('checkbox_needs_hire');
-        if (hireCheck) hireCheck.checked = true;
-        toggleHireAddon(true);
-        hireAddonContainer.classList.remove('hidden');
     }
 
     calculateTotal(basePrice, label, category);
 }
 
-function checkCyclingGearOption(val) {
-    const hireCheck = document.getElementById('checkbox_needs_hire');
-    if (val === 'need_hire') {
-        hireCheck.checked = true;
-        toggleHireAddon(true);
-    } else {
-        hireCheck.checked = false;
-        toggleHireAddon(false);
+function calculateTotal(basePrice, label, category) {
+    const totalDisplay = document.getElementById('total_amount_display');
+    const feeBreakdown = document.getElementById('fee_breakdown_label');
+    
+    if (totalDisplay) {
+        totalDisplay.innerText = `KSh ${basePrice.toLocaleString()}`;
     }
-}
-
-function toggleHireAddon(isChecked) {
-    const dropdowns = document.getElementById('hire_options_dropdowns');
-    if (dropdowns) {
-        if (isChecked) {
-            dropdowns.classList.remove('hidden');
-        } else {
-            dropdowns.classList.add('hidden');
-        }
-    }
-    // Re-calculate
-    const selectedRadio = document.querySelector('input[name="category"]:checked');
-    const cat = selectedRadio ? selectedRadio.value : 'cycling';
-    let base = (cat === 'group_of_3') ? 1500 : ((cat === 'walking' || cat === 'hire_only') ? 500 : 700);
-    calculateTotal(base, cat.replace('_', ' ').toUpperCase(), cat);
-}
-
-function handleHireTypeChange(val) {
-    const shoeBox = document.getElementById('skate_shoe_size_box');
-    if (shoeBox) {
-        if (val === 'Roller Skates') {
-            shoeBox.querySelector('label').innerText = 'Shoe / Skate Size (EU)';
-        } else {
-            shoeBox.querySelector('label').innerText = 'Bike Frame / Rider Height';
-        }
+    if (feeBreakdown) {
+        feeBreakdown.innerText = `(${label}: KSh ${basePrice.toLocaleString()})`;
     }
 }
 
@@ -162,111 +129,109 @@ function toggleMinorFields(isMinor) {
     const fields = document.getElementById('minor_guardian_fields');
     const parentName = document.getElementById('parent_name');
     const parentPhone = document.getElementById('parent_phone');
-    if (isMinor) {
-        fields.classList.remove('hidden');
-        parentName.setAttribute('required', 'required');
-        parentPhone.setAttribute('required', 'required');
-    } else {
-        fields.classList.add('hidden');
-        parentName.removeAttribute('required');
-        parentPhone.removeAttribute('required');
+    if (fields) {
+        if (isMinor) {
+            fields.classList.remove('hidden');
+            if (parentName) parentName.setAttribute('required', 'required');
+            if (parentPhone) parentPhone.setAttribute('required', 'required');
+        } else {
+            fields.classList.add('hidden');
+            if (parentName) parentName.removeAttribute('required');
+            if (parentPhone) parentPhone.removeAttribute('required');
+        }
     }
-}
-
-function calculateTotal(basePrice, label, category) {
-    const hireCheck = document.getElementById('checkbox_needs_hire');
-    let hireCost = 0;
-    
-    // If category is already 'hire_only', basePrice is already 500
-    if (category !== 'hire_only' && hireCheck && hireCheck.checked) {
-        hireCost = 500;
-    }
-
-    const total = basePrice + hireCost;
-    document.getElementById('total_amount_display').innerText = `KSh ${total.toLocaleString()}`;
-
-    let breakdown = `(${label}: KSh ${basePrice}`;
-    if (hireCost > 0) {
-        breakdown += ` + Equipment Hire: KSh 500`;
-    }
-    breakdown += `)`;
-    document.getElementById('fee_breakdown_label').innerText = breakdown;
 }
 
 // ==========================================
-// REGISTRATION SUBMISSION
+// REGISTRATION SUBMISSION & PAYSTACK LAUNCH
 // ==========================================
 async function handleRegistration(e) {
     e.preventDefault();
 
     const submitBtn = document.getElementById('submit-btn');
-    const originalBtnText = submitBtn.innerHTML;
+    const originalBtnText = submitBtn ? submitBtn.innerHTML : 'PAY WITH PAYSTACK';
 
     // Consent validation
-    const consentPhoto = document.getElementById('consent_photography').checked;
-    const consentRules = document.getElementById('consent_rules').checked;
+    const consentPhoto = document.getElementById('consent_photography');
+    const consentRules = document.getElementById('consent_rules');
 
-    if (!consentPhoto || !consentRules) {
+    if (!consentPhoto || !consentPhoto.checked || !consentRules || !consentRules.checked) {
         alert("Please accept both the Photography Consent policy and Safety Regulations to proceed.");
         return;
     }
 
-    const selectedCategory = document.querySelector('input[name="category"]:checked').value;
-    const isMinor = document.getElementById('is_minor_checkbox').checked;
-    const needsHire = document.getElementById('checkbox_needs_hire').checked;
+    const selectedRadio = document.querySelector('input[name="category"]:checked');
+    const selectedCategory = selectedRadio ? selectedRadio.value : 'cycling';
+    const isMinorBox = document.getElementById('is_minor_checkbox');
+    const isMinor = isMinorBox ? isMinorBox.checked : false;
 
     // Prepare category details
     const categoryDetails = {};
     if (selectedCategory === 'cycling') {
-        categoryDetails.distance = document.getElementById('cycling_distance').value;
-        categoryDetails.bike_arrangement = document.getElementById('cycling_bike_type').value;
+        const distEl = document.getElementById('cycling_distance');
+        if (distEl) categoryDetails.distance = distEl.value;
+    } else if (selectedCategory === 'skating') {
+        const distEl = document.getElementById('skating_distance');
+        const gearEl = document.getElementById('skating_gear_type');
+        if (distEl) categoryDetails.distance = distEl.value;
+        if (gearEl) categoryDetails.gear_type = gearEl.value;
     } else if (selectedCategory === 'group_of_3') {
-        categoryDetails.team_name = document.getElementById('group_team_name').value;
-        categoryDetails.activity_mode = document.getElementById('group_activity_mode').value;
+        const teamEl = document.getElementById('group_team_name');
+        const modeEl = document.getElementById('group_activity_mode');
+        if (teamEl) categoryDetails.team_name = teamEl.value;
+        if (modeEl) categoryDetails.activity_mode = modeEl.value;
     } else if (selectedCategory === 'walking') {
-        categoryDetails.distance = document.getElementById('walking_distance').value;
-        categoryDetails.pace = document.getElementById('walking_pace').value;
+        const distEl = document.getElementById('walking_distance');
+        const paceEl = document.getElementById('walking_pace');
+        if (distEl) categoryDetails.distance = distEl.value;
+        if (paceEl) categoryDetails.pace = paceEl.value;
     }
 
     // Group members if applicable
     const groupMembers = [];
     if (selectedCategory === 'group_of_3') {
-        const m2Name = document.getElementById('group_member_2_name').value.trim();
-        const m2Phone = document.getElementById('group_member_2_phone').value.trim();
-        const m3Name = document.getElementById('group_member_3_name').value.trim();
-        const m3Phone = document.getElementById('group_member_3_phone').value.trim();
+        const m2NameEl = document.getElementById('group_member_2_name');
+        const m2PhoneEl = document.getElementById('group_member_2_phone');
+        const m3NameEl = document.getElementById('group_member_3_name');
+        const m3PhoneEl = document.getElementById('group_member_3_phone');
+
+        const m2Name = m2NameEl ? m2NameEl.value.trim() : '';
+        const m2Phone = m2PhoneEl ? m2PhoneEl.value.trim() : '';
+        const m3Name = m3NameEl ? m3NameEl.value.trim() : '';
+        const m3Phone = m3PhoneEl ? m3PhoneEl.value.trim() : '';
 
         if (m2Name) groupMembers.push({ name: m2Name, phone: m2Phone });
         if (m3Name) groupMembers.push({ name: m3Name, phone: m3Phone });
     }
 
-    // Hire details
-    const hireDetails = {};
-    if (needsHire || selectedCategory === 'hire_only') {
-        hireDetails.hire_item = document.getElementById('hire_item_type').value;
-        hireDetails.size = document.getElementById('hire_shoe_size').value;
-        hireDetails.safety_kit = document.getElementById('hire_safety_kit').value;
-    }
+    const fullNameEl = document.getElementById('full_name');
+    const phoneEl = document.getElementById('phone_number');
+    const emailEl = document.getElementById('email');
+    const emergencyEl = document.getElementById('emergency_contact');
+    const parentNameEl = document.getElementById('parent_name');
+    const parentPhoneEl = document.getElementById('parent_phone');
 
     const payload = {
-        full_name: document.getElementById('full_name').value.trim(),
-        phone_number: document.getElementById('phone_number').value.trim(),
-        email: document.getElementById('email').value.trim(),
+        full_name: fullNameEl ? fullNameEl.value.trim() : '',
+        phone_number: phoneEl ? phoneEl.value.trim() : '',
+        email: emailEl ? emailEl.value.trim() : '',
         category: selectedCategory,
-        needs_hire: needsHire || selectedCategory === 'hire_only',
+        needs_hire: false,
         category_details: categoryDetails,
         group_members: groupMembers,
-        hire_details: hireDetails,
+        hire_details: {},
         is_minor: isMinor,
-        parent_name: isMinor ? document.getElementById('parent_name').value.trim() : '',
-        parent_phone: isMinor ? document.getElementById('parent_phone').value.trim() : '',
-        emergency_contact: document.getElementById('emergency_contact').value.trim(),
-        consent_photography: consentPhoto,
-        consent_rules: consentRules
+        parent_name: (isMinor && parentNameEl) ? parentNameEl.value.trim() : '',
+        parent_phone: (isMinor && parentPhoneEl) ? parentPhoneEl.value.trim() : '',
+        emergency_contact: emergencyEl ? emergencyEl.value.trim() : '',
+        consent_photography: consentPhoto.checked,
+        consent_rules: consentRules.checked
     };
 
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Initializing Paystack Checkout...`;
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Initializing Paystack Checkout...`;
+    }
 
     try {
         const response = await fetch('/api/register', {
@@ -279,19 +244,23 @@ async function handleRegistration(e) {
 
         if (!data.success) {
             alert(data.error || 'Registration failed. Please check inputs.');
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalBtnText;
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            }
             return;
         }
 
-        // Proceed to Paystack payment
+        // Proceed directly to Paystack payment
         initiatePaystackPayment(data, payload);
 
     } catch (err) {
         alert("An error occurred while connecting to server. Please try again.");
     } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalBtnText;
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+        }
     }
 }
 
@@ -299,7 +268,7 @@ async function handleRegistration(e) {
 let currentPendingPayment = null;
 
 function initiatePaystackPayment(regData, payload) {
-    const pubKey = regData.paystack_public_key || 'pk_test_sample_stemaride';
+    const pubKey = regData.paystack_public_key;
     const email = payload.email || `${payload.phone_number.replace(/\D/g, '')}@stemaride.ke`;
     const amountKobo = regData.amount_kobo;
     const ticketCode = regData.ticket_code;
@@ -311,41 +280,55 @@ function initiatePaystackPayment(regData, payload) {
         amountDue: regData.amount_due
     };
 
-    // If real Paystack key is present and PaystackPop is loaded
-    if (window.PaystackPop && pubKey && !pubKey.includes('sample_stemaride')) {
+    if (typeof PaystackPop === 'undefined') {
+        alert("Payment gateway is still loading. Please check your internet connection and try clicking Pay again in a moment.");
+        return;
+    }
+
+    try {
+        const handler = PaystackPop.setup({
+            key: pubKey,
+            email: email,
+            amount: amountKobo,
+            currency: 'KES',
+            ref: `STM-${ticketCode}-${Date.now().toString().slice(-4)}`,
+            channels: ['card', 'mobile_money', 'bank'],
+            metadata: {
+                custom_fields: [
+                    { display_name: "Participant Name", variable_name: "participant_name", value: payload.full_name },
+                    { display_name: "Phone Number", variable_name: "phone_number", value: payload.phone_number },
+                    { display_name: "Ticket Code", variable_name: "ticket_code", value: ticketCode }
+                ]
+            },
+            callback: function(response) {
+                verifyAndUnlockTicket(response.reference, ticketCode);
+            },
+            onClose: function() {
+                // Closed by participant
+            }
+        });
+        handler.openIframe();
+    } catch (e) {
+        console.warn("Paystack setup fallback:", e);
         try {
-            const handler = PaystackPop.setup({
+            const paystack = new PaystackPop();
+            paystack.newTransaction({
                 key: pubKey,
                 email: email,
                 amount: amountKobo,
                 currency: 'KES',
-                ref: `TR26-${ticketCode}-${Date.now().toString().slice(-4)}`,
-                channels: ['card', 'mobile_money', 'bank'],
-                metadata: {
-                    custom_fields: [
-                        { display_name: "Participant Name", variable_name: "participant_name", value: payload.full_name },
-                        { display_name: "Phone Number", variable_name: "phone_number", value: payload.phone_number },
-                        { display_name: "Ticket Code", variable_name: "ticket_code", value: ticketCode }
-                    ]
+                reference: `STM-${ticketCode}-${Date.now().toString().slice(-4)}`,
+                onSuccess: function(transaction) {
+                    verifyAndUnlockTicket(transaction.reference, ticketCode);
                 },
-                callback: function(response) {
-                    verifyAndUnlockTicket(response.reference, ticketCode);
-                },
-                onClose: function() {
-                    alert("Paystack payment cancelled. Your ticket reference is " + ticketCode + ". You can pay and verify anytime.");
+                onCancel: function() {
+                    // cancelled
                 }
             });
-            handler.openIframe();
-            return;
-        } catch (e) {
-            console.warn("Paystack inline launch error, falling back to simulator:", e);
+        } catch (err2) {
+            alert("Error launching Paystack: " + (e.message || err2.message));
         }
     }
-
-    // If Paystack cannot be initialized, show an error and halt the flow.
-    alert('Unable to load Paystack payment gateway. Please try again later.');
-    // Do not proceed with simulated payment; registration will remain pending.
-    return;
 }
 
 async function confirmSimulatedPayment() {
