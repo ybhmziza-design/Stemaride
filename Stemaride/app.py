@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, Response
+from flask import Flask, render_template, request, jsonify, redirect, url_for, Response, session
 import database
 import json
 import csv
@@ -7,6 +7,9 @@ import os
 import requests
 
 app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY', 'stema_ride_secure_session_key_2026')
+
+ADMIN_PIN = os.environ.get('ADMIN_PIN', 'stema2026')
 
 # Initialize database on startup
 database.init_db()
@@ -29,8 +32,13 @@ def load_env():
 
 def get_paystack_keys():
     env = load_env()
-    pub = env.get('PAYSTACK_PUBLIC_KEY') or os.environ.get('PAYSTACK_PUBLIC_KEY') or 'pk_test_sample_stemaride'
-    sec = env.get('PAYSTACK_SECRET_KEY') or os.environ.get('PAYSTACK_SECRET_KEY') or ''
+    # Check OS environment (e.g. Render Dashboard) first, then .env, then default to live keys
+    pub = (os.environ.get('PAYSTACK_PUBLIC_KEY') or 
+           env.get('PAYSTACK_PUBLIC_KEY') or 
+           'pk_live_10125e775f841aecd4b8cfd374bcd63e8701325f')
+    sec = (os.environ.get('PAYSTACK_SECRET_KEY') or 
+           env.get('PAYSTACK_SECRET_KEY') or 
+           'sk_live_8e5be179923e750467bb83b3718fca96f8e997fe')
     return pub, sec
 
 @app.route('/')
@@ -44,6 +52,11 @@ def ticket_view(ticket_code):
     reg = database.get_registration_by_code(ticket_code)
     if not reg:
         return render_template('404.html', message="Ticket code not found"), 404
+        
+    # Only allow viewing/downloading ticket pass if payment has been confirmed
+    is_paid = reg['payment_status'] and ('Paid' in reg['payment_status'] or reg['payment_status'] == 'Confirmed')
+    if not is_paid:
+        return render_template('404.html', message="Payment Pending: Ticket passes are only issued after successful Paystack payment."), 403
     
     # Parse json fields for display
     hire_details = json.loads(reg['hire_details']) if reg['hire_details'] else {}
@@ -56,8 +69,28 @@ def ticket_view(ticket_code):
                            group_members=group_members, 
                            category_details=category_details)
 
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    if request.method == 'POST':
+        pin = request.form.get('admin_pin', '').strip()
+        if pin == ADMIN_PIN:
+            session['is_admin'] = True
+            return redirect(url_for('admin_view'))
+        else:
+            return render_template('admin_login.html', error="Invalid PIN. Access denied.")
+    if session.get('is_admin'):
+        return redirect(url_for('admin_view'))
+    return render_template('admin_login.html')
+
+@app.route('/admin/logout')
+def admin_logout():
+    session.pop('is_admin', None)
+    return redirect(url_for('home'))
+
 @app.route('/admin')
 def admin_view():
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_login'))
     stats = database.get_statistics()
     pub_key, sec_key = get_paystack_keys()
     return render_template('admin.html', stats=stats, paystack_pub_key=pub_key, paystack_sec_key=sec_key)
@@ -225,12 +258,12 @@ def api_search():
 
 @app.route('/api/admin/registrations', methods=['GET'])
 def api_admin_registrations():
-    paid_only = request.args.get('paid_only')
-    regs = database.get_all_registrations(category, search)
-    
-    # If paid_only flag is set, filter registrations with a confirmed payment status
-    if paid_only == '1':
-        regs = [r for r in regs if r['payment_status'] and 'Paid' in r['payment_status']]
+    if not session.get('is_admin'):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    category = request.args.get('category', 'all')
+    search = request.args.get('search', '')
+    paid_only = request.args.get('paid_only', '1') == '1'
+    regs = database.get_all_registrations(category, search, paid_only=paid_only)
     
     processed = []
     for r in regs:
@@ -242,8 +275,17 @@ def api_admin_registrations():
     
     return jsonify({'success': True, 'registrations': processed})
 
+@app.route('/api/admin/clear-all', methods=['POST'])
+def api_admin_clear_all():
+    if not session.get('is_admin'):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    database.clear_all_registrations()
+    return jsonify({'success': True, 'message': 'All test/dummy registrations have been deleted.'})
+
 @app.route('/api/admin/toggle-checkin/<ticket_code>', methods=['POST'])
 def api_toggle_checkin(ticket_code):
+    if not session.get('is_admin'):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
     reg = database.get_registration_by_code(ticket_code)
     if not reg:
         return jsonify({'success': False, 'error': 'Ticket not found'}), 404
@@ -254,6 +296,8 @@ def api_toggle_checkin(ticket_code):
 
 @app.route('/api/admin/update-payment/<ticket_code>', methods=['POST'])
 def api_update_payment(ticket_code):
+    if not session.get('is_admin'):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
     data = request.get_json() or {}
     payment_status = data.get('payment_status')
     if not payment_status:
@@ -269,7 +313,9 @@ def api_stats():
 
 @app.route('/api/admin/export-csv')
 def export_csv():
-    regs = database.get_all_registrations()
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_login'))
+    regs = database.get_all_registrations(paid_only=True)
     
     output = io.StringIO()
     writer = csv.writer(output)

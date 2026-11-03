@@ -185,3 +185,27 @@ async function savePaystackKeys(e) {
         btn.innerHTML = originalText;
     }
 }
+
+async function confirmClearAll() {
+    const confirmation = prompt("⚠️ WARNING: This will permanently delete ALL registration records.\nType 'CLEAR' in all caps to confirm:");
+    if (confirmation !== 'CLEAR') {
+        if (confirmation !== null) alert("Clear operation cancelled.");
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/admin/clear-all', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert(data.message || "All records have been cleared.");
+            window.location.reload();
+        } else {
+            alert("Error: " + (data.error || "Failed to clear records."));
+        }
+    } catch (e) {
+        alert("Server error occurred while clearing records.");
+    }
+}

@@ -96,7 +96,7 @@ def create_registration(data):
         1 if data.get('consent_rules') else 0,
         data.get('emergency_contact', '').strip(),
         data.get('mpesa_reference', '').strip().upper(),
-        'Confirmed' if data.get('mpesa_reference') else 'Pending Verification',
+        'Pending Payment',
         0
     ))
     conn.commit()
@@ -123,13 +123,15 @@ def search_registration(query):
         
     cursor.execute('''
         SELECT * FROM registrations 
-        WHERE ticket_code = ? 
-           OR UPPER(ticket_code) = UPPER(?)
-           OR phone_number LIKE ? 
-           OR phone_number LIKE ?
-           OR UPPER(mpesa_reference) = UPPER(?)
+        WHERE (payment_status LIKE '%Paid%' OR payment_status = 'Confirmed')
+          AND (ticket_code = ? 
+               OR UPPER(ticket_code) = UPPER(?)
+               OR phone_number LIKE ? 
+               OR phone_number LIKE ?
+               OR UPPER(paystack_reference) = UPPER(?)
+               OR UPPER(mpesa_reference) = UPPER(?))
         ORDER BY id DESC
-    ''', (clean_query, clean_query, f"%{clean_query}%", f"%{phone_alt}%", clean_query))
+    ''', (clean_query, clean_query, f"%{clean_query}%", f"%{phone_alt}%", clean_query, clean_query))
     rows = cursor.fetchall()
     conn.close()
     return [dict(r) for r in rows]
@@ -142,12 +144,15 @@ def get_registration_by_code(ticket_code):
     conn.close()
     return dict(row) if row else None
 
-def get_all_registrations(category_filter=None, search_term=None):
+def get_all_registrations(category_filter=None, search_term=None, paid_only=False):
     conn = get_db_connection()
     cursor = conn.cursor()
     query = "SELECT * FROM registrations WHERE 1=1"
     params = []
     
+    if paid_only:
+        query += " AND (payment_status LIKE '%Paid%' OR payment_status = 'Confirmed')"
+
     if category_filter and category_filter != 'all':
         query += " AND category = ?"
         params.append(category_filter)
@@ -192,25 +197,51 @@ def mark_paid_paystack(ticket_code, reference):
     conn.close()
     return dict(row) if row else None
 
+def clear_all_registrations():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM registrations")
+    conn.commit()
+    conn.close()
+
 def get_statistics():
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) as total_count, COALESCE(SUM(amount_due), 0) as total_revenue FROM registrations")
+    # Only count confirmed / paid registrations
+    cursor.execute("""
+        SELECT COUNT(*) as total_count, COALESCE(SUM(amount_due), 0) as total_revenue 
+        FROM registrations 
+        WHERE payment_status LIKE '%Paid%' OR payment_status = 'Confirmed'
+    """)
     total_stats = cursor.fetchone()
     
     cursor.execute("""
         SELECT category, COUNT(*) as count, COALESCE(SUM(amount_due), 0) as revenue 
-        FROM registrations GROUP BY category
+        FROM registrations 
+        WHERE payment_status LIKE '%Paid%' OR payment_status = 'Confirmed'
+        GROUP BY category
     """)
     category_stats = {r['category']: {'count': r['count'], 'revenue': r['revenue']} for r in cursor.fetchall()}
     
-    cursor.execute("SELECT COUNT(*) as hire_count FROM registrations WHERE needs_hire = 1")
+    cursor.execute("""
+        SELECT COUNT(*) as hire_count 
+        FROM registrations 
+        WHERE needs_hire = 1 AND (payment_status LIKE '%Paid%' OR payment_status = 'Confirmed')
+    """)
     hire_stats = cursor.fetchone()
     
-    cursor.execute("SELECT COUNT(*) as checked_in_count FROM registrations WHERE checked_in = 1")
+    cursor.execute("""
+        SELECT COUNT(*) as checked_in_count 
+        FROM registrations 
+        WHERE checked_in = 1 AND (payment_status LIKE '%Paid%' OR payment_status = 'Confirmed')
+    """)
     checkin_stats = cursor.fetchone()
     
-    cursor.execute("SELECT COUNT(*) as minor_count FROM registrations WHERE is_minor = 1")
+    cursor.execute("""
+        SELECT COUNT(*) as minor_count 
+        FROM registrations 
+        WHERE is_minor = 1 AND (payment_status LIKE '%Paid%' OR payment_status = 'Confirmed')
+    """)
     minor_stats = cursor.fetchone()
     
     conn.close()
