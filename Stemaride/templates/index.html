@@ -1,0 +1,814 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="relative overflow-hidden pt-8 pb-14 lg:pt-16 lg:pb-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            
+            <!-- Left Column: High-Impact Hero Headline & Details -->
+            <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+                
+                <!-- Animated Active Event Pill -->
+                <div class="inline-flex items-center space-x-2 bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-cyan-500/20 border border-emerald-400/40 px-4 py-1.5 rounded-full text-emerald-300 text-xs sm:text-sm font-black tracking-wide shadow-lg shadow-emerald-500/10">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span>Upcoming Edition: Saturday, 21st November 2026</span>
+                </div>
+
+                <!-- STEMA Main Brand Title -->
+                <h1 class="stema-title text-6xl sm:text-7xl md:text-8xl lg:text-9xl tracking-tight leading-none text-white drop-shadow-2xl">
+                    <span class="gradient-shimmer-text">STEMA</span>
+                </h1>
+                
+                <!-- Sports Subtitle & Badges -->
+                <div class="text-xl sm:text-2xl font-black tracking-tight text-slate-200 flex flex-wrap justify-center lg:justify-start items-center gap-2.5">
+                    <span class="px-3.5 py-1.5 bg-emerald-500/20 text-emerald-300 rounded-xl border border-emerald-500/30 flex items-center gap-2 shadow-sm hover:scale-105 transition">
+                        <i class="fa-solid fa-bicycle text-sm"></i>
+                        <span>Ride</span>
+                    </span>
+                    <span class="text-slate-600 font-bold">•</span>
+                    <span class="px-3.5 py-1.5 bg-cyan-500/20 text-cyan-300 rounded-xl border border-cyan-500/30 flex items-center gap-2 shadow-sm hover:scale-105 transition">
+                        <i class="fa-solid fa-person-skating text-sm"></i>
+                        <span>Skate</span>
+                    </span>
+                    <span class="text-slate-600 font-bold">•</span>
+                    <span class="px-3.5 py-1.5 bg-purple-500/20 text-purple-300 rounded-xl border border-purple-500/30 flex items-center gap-2 shadow-sm hover:scale-105 transition">
+                        <i class="fa-solid fa-person-walking text-sm"></i>
+                        <span>Walk</span>
+                    </span>
+                </div>
+
+                <p class="text-base sm:text-lg text-emerald-400 font-extrabold italic">
+                    "Adventure • Fitness • Community — Movement, Vitality and Memories for Everyone!"
+                </p>
+
+                <p class="text-slate-300 text-sm sm:text-base max-w-xl mx-auto lg:mx-0 leading-relaxed font-normal">
+                    Welcome to <strong class="text-white font-black">STEMA</strong>, your annual home for cycling, roller-skating, and community fun walking! Join hundreds of active movers in Nairobi. Pay effortlessly with <strong class="text-emerald-400">Paystack (M-Pesa & Card)</strong> and receive your official scannable ticket pass immediately for download.
+                </p>
+
+                <!-- Key Highlights Badges -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 py-2">
+                    <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 text-center shadow-lg hover:border-emerald-500/40 transition">
+                        <div class="text-[10px] text-slate-400 uppercase font-black tracking-wider">Date</div>
+                        <div class="font-black text-white text-sm mt-0.5">21 Nov 2026</div>
+                    </div>
+                    <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 text-center shadow-lg hover:border-emerald-500/40 transition">
+                        <div class="text-[10px] text-slate-400 uppercase font-black tracking-wider">Starting From</div>
+                        <div class="font-black text-emerald-400 text-sm mt-0.5">KSh 500</div>
+                    </div>
+                    <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 text-center shadow-lg hover:border-cyan-500/40 transition">
+                        <div class="text-[10px] text-slate-400 uppercase font-black tracking-wider">Group of 3 Offer</div>
+                        <div class="font-black text-cyan-400 text-sm mt-0.5">KSh 1,500 (3 pax)</div>
+                    </div>
+                    <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 text-center shadow-lg hover:border-yellow-500/40 transition">
+                        <div class="text-[10px] text-slate-400 uppercase font-black tracking-wider">Gear Rental</div>
+                        <div class="font-black text-amber-400 text-sm mt-0.5">KSh 500 / day</div>
+                    </div>
+                </div>
+
+                <!-- Call to Actions -->
+                <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
+                    <a href="#register" class="btn-gleam w-full sm:w-auto bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-black text-base px-8 py-4 rounded-2xl shadow-xl shadow-emerald-500/30 hover:scale-105 active:scale-95 transition-all text-center flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-bolt-lightning text-lg"></i>
+                        <span>REGISTER & PAY (PAYSTACK)</span>
+                    </a>
+                    <a href="#find-ticket" class="w-full sm:w-auto bg-slate-900/90 hover:bg-slate-800 text-emerald-400 hover:text-white border border-emerald-500/30 font-bold text-sm px-6 py-4 rounded-2xl transition text-center flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <span>Find My Registration / Ticket</span>
+                    </a>
+                </div>
+
+                <!-- Live Countdown -->
+                <div class="bg-slate-900/80 border border-emerald-500/20 rounded-2xl p-4 mt-6 shadow-xl relative overflow-hidden">
+                    <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                    <div class="text-xs text-slate-400 font-extrabold uppercase tracking-wider mb-2 text-center lg:text-left flex items-center justify-center lg:justify-start gap-2">
+                        <i class="fa-regular fa-clock text-emerald-400"></i>
+                        <span>Countdown to Next STEMA Ride (21st Nov 2026)</span>
+                    </div>
+                    <div id="countdown" class="grid grid-cols-4 gap-2 text-center">
+                        <div class="bg-slate-950/90 rounded-xl p-2.5 border border-slate-800">
+                            <span id="cd-days" class="block font-black text-2xl text-emerald-400">--</span>
+                            <span class="text-[10px] text-slate-400 uppercase font-black">Days</span>
+                        </div>
+                        <div class="bg-slate-950/90 rounded-xl p-2.5 border border-slate-800">
+                            <span id="cd-hours" class="block font-black text-2xl text-white">--</span>
+                            <span class="text-[10px] text-slate-400 uppercase font-black">Hours</span>
+                        </div>
+                        <div class="bg-slate-950/90 rounded-xl p-2.5 border border-slate-800">
+                            <span id="cd-mins" class="block font-black text-2xl text-white">--</span>
+                            <span class="text-[10px] text-slate-400 uppercase font-black">Mins</span>
+                        </div>
+                        <div class="bg-slate-950/90 rounded-xl p-2.5 border border-slate-800">
+                            <span id="cd-secs" class="block font-black text-2xl text-rose-400">--</span>
+                            <span class="text-[10px] text-slate-400 uppercase font-black">Secs</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Official Poster Showcase & Floating Badges -->
+            <div class="lg:col-span-5 flex justify-center relative">
+                
+                <!-- Floating Decorative Sports Badges -->
+                <div class="absolute -top-6 -left-6 bg-slate-900 border border-emerald-500/40 px-3.5 py-2 rounded-2xl shadow-xl flex items-center gap-2 z-20 animate-float-slow hidden sm:flex">
+                    <span class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-black">
+                        <i class="fa-solid fa-bicycle"></i>
+                    </span>
+                    <span class="text-xs font-black text-white">15 - 50KM</span>
+                </div>
+
+                <div class="absolute -bottom-6 -right-4 bg-slate-900 border border-cyan-500/40 px-3.5 py-2 rounded-2xl shadow-xl flex items-center gap-2 z-20 animate-float-reverse hidden sm:flex">
+                    <span class="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-black">
+                        <i class="fa-solid fa-person-skating"></i>
+                    </span>
+                    <span class="text-xs font-black text-white">Skate & Walk</span>
+                </div>
+
+                <div class="relative group max-w-sm sm:max-w-md w-full">
+                    <div class="absolute -inset-1 bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500 rounded-3xl blur-xl opacity-40 group-hover:opacity-75 transition duration-700"></div>
+                    <div class="relative bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl">
+                        <img src="{{ url_for('static', filename='images/event_poster.jpg') }}" alt="STEMA Official Poster" class="w-full h-auto object-cover rounded-2xl transform group-hover:scale-102 transition duration-500 cursor-pointer" onclick="openPosterModal()">
+                        <div class="p-4 bg-slate-900/95 border-t border-slate-800 flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-black text-white uppercase tracking-wider">Official Event Poster</p>
+                                <p class="text-[11px] text-slate-400">Click to expand high-res poster</p>
+                            </div>
+                            <button onclick="openPosterModal()" class="text-xs bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 transition">
+                                <i class="fa-solid fa-expand"></i>
+                                <span>View HD</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- Lively Infinite Marquee Ticker -->
+<div class="marquee-container bg-slate-900/70 border-y border-emerald-500/20 py-3 text-xs font-black uppercase tracking-widest my-4">
+    <div class="marquee-content flex items-center gap-8 text-slate-300">
+        <span class="text-emerald-400">🚴 CYCLING KSH 700</span>
+        <span class="text-slate-600">•</span>
+        <span class="text-cyan-400">👥 GROUP OF 3 (KSH 1,500)</span>
+        <span class="text-slate-600">•</span>
+        <span class="text-amber-400">⛸️ BIKES & SKATES HIRE KSH 500</span>
+        <span class="text-slate-600">•</span>
+        <span class="text-purple-400">👟 WALKING FUN LOOP KSH 500</span>
+        <span class="text-slate-600">•</span>
+        <span class="text-emerald-300">💳 PAYSTACK LIVE M-PESA & CARDS</span>
+        <span class="text-slate-600">•</span>
+        <span class="text-yellow-400">⚡ INSTANT QR TICKET PASS</span>
+        <span class="text-slate-600">•</span>
+        <span class="text-rose-400">📅 21ST NOVEMBER 2026</span>
+        <span class="text-slate-600">•</span>
+        <!-- Continuous loop duplicates -->
+        <span class="text-emerald-400">🚴 CYCLING KSH 700</span>
+        <span class="text-slate-600">•</span>
+        <span class="text-cyan-400">👥 GROUP OF 3 (KSH 1,500)</span>
+        <span class="text-slate-600">•</span>
+        <span class="text-amber-400">⛸️ BIKES & SKATES HIRE KSH 500</span>
+        <span class="text-slate-600">•</span>
+        <span class="text-purple-400">👟 WALKING FUN LOOP KSH 500</span>
+        <span class="text-slate-600">•</span>
+        <span class="text-emerald-300">💳 PAYSTACK LIVE M-PESA & CARDS</span>
+        <span class="text-slate-600">•</span>
+        <span class="text-yellow-400">⚡ INSTANT QR TICKET PASS</span>
+        <span class="text-slate-600">•</span>
+        <span class="text-rose-400">📅 21ST NOVEMBER 2026</span>
+        <span class="text-slate-600">•</span>
+    </div>
+</div>
+
+<!-- Poster Modal -->
+<div id="poster-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm hidden flex items-center justify-center p-4" onclick="closePosterModal(event)">
+    <div class="relative max-w-xl w-full" onclick="event.stopPropagation()">
+        <button onclick="closePosterModal()" class="absolute -top-12 right-0 text-white hover:text-emerald-400 text-2xl font-bold bg-slate-900/80 w-10 h-10 rounded-full flex items-center justify-center transition">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <img src="{{ url_for('static', filename='images/event_poster.jpg') }}" alt="Event Poster Full View" class="w-full h-auto max-h-[85vh] object-contain rounded-2xl shadow-2xl border border-slate-700">
+    </div>
+</div>
+
+<!-- Categories & Pricing Section -->
+<section id="categories" class="py-16 relative">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto mb-14">
+            <span class="text-xs font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-4 py-1.5 rounded-full border border-emerald-500/30">Official Pricing Breakdown</span>
+            <h2 class="font-display font-black text-3xl sm:text-5xl text-white mt-3">Choose Your Movement Category</h2>
+            <p class="text-slate-400 text-sm sm:text-base mt-2">
+                Click any category below to jump straight into registration and dynamic options!
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            
+            <!-- Category 1: Cycling -->
+            <div onclick="selectCategory('cycling')" class="category-card bg-slate-900/90 rounded-3xl p-6 border-2 border-emerald-500/40 hover:border-emerald-400 hover:shadow-2xl hover:shadow-emerald-500/20 cursor-pointer group flex flex-col justify-between shadow-xl">
+                <div class="absolute top-0 right-0 bg-emerald-500 text-slate-950 text-[10px] font-black uppercase px-3 py-1 rounded-bl-2xl">Popular</div>
+                <div>
+                    <div class="w-14 h-14 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition">
+                        <i class="fa-solid fa-bicycle"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-white">Cycling</h3>
+                    <p class="text-xs text-slate-400 mt-1 mb-4 leading-relaxed">Dedicated solo cycling routes with lead marshals, route escort & hydration points.</p>
+                </div>
+                <div>
+                    <div class="border-t border-slate-800 pt-4">
+                        <span class="text-xs text-slate-400 font-semibold block uppercase">Registration Fee</span>
+                        <div class="flex items-baseline gap-1 mt-1">
+                            <span class="text-3xl font-black text-emerald-400">KSh 700</span>
+                            <span class="text-xs text-slate-400">/ person</span>
+                        </div>
+                    </div>
+                    <button class="w-full mt-5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-2.5 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-md shadow-emerald-500/20">
+                        <span>Select Cycling</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Category 2: Group of 3 -->
+            <div onclick="selectCategory('group_of_3')" class="category-card bg-slate-900/90 rounded-3xl p-6 border-2 border-cyan-500/40 hover:border-cyan-400 hover:shadow-2xl hover:shadow-cyan-500/20 cursor-pointer group flex flex-col justify-between shadow-xl">
+                <div class="absolute top-0 right-0 bg-cyan-500 text-slate-950 text-[10px] font-black uppercase px-3 py-1 rounded-bl-2xl">Best Value</div>
+                <div>
+                    <div class="w-14 h-14 rounded-2xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-white">Group of 3</h3>
+                    <p class="text-xs text-slate-400 mt-1 mb-4 leading-relaxed">Ride, skate, or walk together as a trio! Perfect for families, friends & clubs.</p>
+                </div>
+                <div>
+                    <div class="border-t border-slate-800 pt-4">
+                        <span class="text-xs text-slate-400 font-semibold block uppercase">Squad Package</span>
+                        <div class="flex items-baseline gap-1 mt-1">
+                            <span class="text-3xl font-black text-cyan-400">KSh 1,500</span>
+                            <span class="text-xs text-slate-400">/ 3 participants</span>
+                        </div>
+                        <span class="text-[11px] text-cyan-300 font-semibold">Save KSh 600 total!</span>
+                    </div>
+                    <button class="w-full mt-5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black py-2.5 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-md shadow-cyan-500/20">
+                        <span>Select Group of 3</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Category 3: Skating -->
+            <div onclick="selectCategory('skating')" class="category-card bg-slate-900/90 rounded-3xl p-6 border-2 border-amber-500/40 hover:border-amber-400 hover:shadow-2xl hover:shadow-amber-500/20 cursor-pointer group flex flex-col justify-between shadow-xl">
+                <div class="absolute top-0 right-0 bg-amber-500 text-slate-950 text-[10px] font-black uppercase px-3 py-1 rounded-bl-2xl">Smooth Tarmac</div>
+                <div>
+                    <div class="w-14 h-14 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition">
+                        <i class="fa-solid fa-person-skating"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-white">Skating</h3>
+                    <p class="text-xs text-slate-400 mt-1 mb-4 leading-relaxed">Roller & inline skating on smooth tarmac loops with safety escorts and music vibes.</p>
+                </div>
+                <div>
+                    <div class="border-t border-slate-800 pt-4">
+                        <span class="text-xs text-slate-400 font-semibold block uppercase">Registration Fee</span>
+                        <div class="flex items-baseline gap-1 mt-1">
+                            <span class="text-3xl font-black text-amber-400">KSh 500</span>
+                            <span class="text-xs text-slate-400">/ person</span>
+                        </div>
+                        <span class="text-[11px] text-amber-300 font-semibold">Bring own skates & guards</span>
+                    </div>
+                    <button class="w-full mt-5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-2.5 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-md shadow-amber-500/20">
+                        <span>Select Skating</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Category 4: Walking -->
+            <div onclick="selectCategory('walking')" class="category-card bg-slate-900/90 rounded-3xl p-6 border-2 border-purple-500/40 hover:border-purple-400 hover:shadow-2xl hover:shadow-purple-500/20 cursor-pointer group flex flex-col justify-between shadow-xl">
+                <div class="absolute top-0 right-0 bg-purple-500 text-white text-[10px] font-black uppercase px-3 py-1 rounded-bl-2xl">Wellness</div>
+                <div>
+                    <div class="w-14 h-14 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition">
+                        <i class="fa-solid fa-person-walking"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-white">Walking</h3>
+                    <p class="text-xs text-slate-400 mt-1 mb-4 leading-relaxed">Scenic fun walk for all ages, wellness, casual fitness, and community spirit.</p>
+                </div>
+                <div>
+                    <div class="border-t border-slate-800 pt-4">
+                        <span class="text-xs text-slate-400 font-semibold block uppercase">Registration Fee</span>
+                        <div class="flex items-baseline gap-1 mt-1">
+                            <span class="text-3xl font-black text-purple-400">KSh 500</span>
+                            <span class="text-xs text-slate-400">/ person</span>
+                        </div>
+                        <span class="text-[11px] text-purple-300 font-semibold">5KM & 10KM loops</span>
+                    </div>
+                    <button class="w-full mt-5 bg-purple-500 hover:bg-purple-400 text-white font-black py-2.5 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-md shadow-purple-500/20">
+                        <span>Select Walking</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- Registration Form Section (with Dynamic Category Prompts & Anti Mix-Up Logic) -->
+<section id="register" class="py-16 relative">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="text-center mb-10">
+            <span class="text-xs font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-4 py-1.5 rounded-full border border-emerald-500/30">Official STEMA Portal</span>
+            <h2 class="font-display font-black text-3xl sm:text-4xl text-white mt-3">Register For STEMA</h2>
+            <p class="text-slate-400 text-sm mt-1">
+                Fill in your details below. Each registrant receives an official verified Ticket ID to prevent any number mix-up!
+            </p>
+        </div>
+
+        <!-- Form Card -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl backdrop-blur-xl">
+            
+            <form id="registration-form" onsubmit="handleRegistration(event)" class="space-y-8">
+                
+                <!-- Category Selector Tabs -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-200 mb-3 flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-full bg-emerald-400 text-slate-950 flex items-center justify-center text-xs font-black">1</span>
+                        <span>Select Your Event Category <span class="text-rose-500">*</span></span>
+                    </label>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <label class="category-radio-label cursor-pointer">
+                            <input type="radio" name="category" value="cycling" checked onchange="onCategoryChanged()" class="peer sr-only">
+                            <div class="p-3 text-center rounded-2xl border border-slate-800 bg-slate-950/60 peer-checked:border-emerald-400 peer-checked:bg-emerald-500/10 transition">
+                                <i class="fa-solid fa-bicycle text-emerald-400 text-xl block mb-1"></i>
+                                <span class="font-bold text-xs text-white block">Cycling</span>
+                                <span class="text-[11px] text-emerald-400 font-black">KSh 700</span>
+                            </div>
+                        </label>
+
+                        <label class="category-radio-label cursor-pointer">
+                            <input type="radio" name="category" value="skating" onchange="onCategoryChanged()" class="peer sr-only">
+                            <div class="p-3 text-center rounded-2xl border border-slate-800 bg-slate-950/60 peer-checked:border-amber-400 peer-checked:bg-amber-500/10 transition">
+                                <i class="fa-solid fa-person-skating text-amber-400 text-xl block mb-1"></i>
+                                <span class="font-bold text-xs text-white block">Skating</span>
+                                <span class="text-[11px] text-amber-400 font-black">KSh 500</span>
+                            </div>
+                        </label>
+
+                        <label class="category-radio-label cursor-pointer">
+                            <input type="radio" name="category" value="group_of_3" onchange="onCategoryChanged()" class="peer sr-only">
+                            <div class="p-3 text-center rounded-2xl border border-slate-800 bg-slate-950/60 peer-checked:border-cyan-400 peer-checked:bg-cyan-500/10 transition">
+                                <i class="fa-solid fa-users text-cyan-400 text-xl block mb-1"></i>
+                                <span class="font-bold text-xs text-white block">Group of 3</span>
+                                <span class="text-[11px] text-cyan-400 font-black">KSh 1,500</span>
+                            </div>
+                        </label>
+
+                        <label class="category-radio-label cursor-pointer">
+                            <input type="radio" name="category" value="walking" onchange="onCategoryChanged()" class="peer sr-only">
+                            <div class="p-3 text-center rounded-2xl border border-slate-800 bg-slate-950/60 peer-checked:border-purple-400 peer-checked:bg-purple-500/10 transition">
+                                <i class="fa-solid fa-person-walking text-purple-400 text-xl block mb-1"></i>
+                                <span class="font-bold text-xs text-white block">Walking</span>
+                                <span class="text-[11px] text-purple-400 font-black">KSh 500</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- DYNAMIC CATEGORY-SPECIFIC PROMPT SECTION -->
+                <div id="dynamic-category-prompt-container" class="bg-slate-950/90 border border-emerald-500/30 rounded-2xl p-5 space-y-4">
+                    <div class="flex items-center space-x-2 text-emerald-400 font-bold text-sm">
+                        <i class="fa-solid fa-sliders"></i>
+                        <span id="prompt-heading">Category Details & Options</span>
+                    </div>
+
+                    <!-- Cycling Specific Prompts -->
+                    <div id="prompt-cycling" class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">Cycling Experience / Distance</label>
+                                <select id="cycling_distance" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-400">
+                                    <option value="15KM Beginner Friendly">15KM - Beginner / Leisure Pace</option>
+                                    <option value="30KM Intermediate Route">30KM - Intermediate Enthusiast</option>
+                                    <option value="50KM Challenge Pro">50KM - Challenge Pro Circuit</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">Bicycle Confirmation</label>
+                                <div class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-300 flex items-center gap-2">
+                                    <i class="fa-solid fa-circle-check text-emerald-400"></i>
+                                    <span>Bringing own bicycle (Helmet mandatory)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Skating Specific Prompts -->
+                    <div id="prompt-skating" class="space-y-4 hidden">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">Skating Experience / Loop</label>
+                                <select id="skating_distance" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400">
+                                    <option value="5KM Leisure Skate">5KM - Leisure / Beginner Skate Loop</option>
+                                    <option value="10KM Intermediate Glide">10KM - Intermediate Tarmac Glide</option>
+                                    <option value="Endurance Speed Skate">Endurance Speed Skate</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">Skate Equipment Type</label>
+                                <select id="skating_gear_type" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400">
+                                    <option value="Inline Skates (Rollerblades)">Inline Skates (Rollerblades)</option>
+                                    <option value="Quad Skates (4-Wheels)">Quad Skates (4-Wheels)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="p-3 bg-amber-500/10 rounded-xl border border-amber-500/30 text-xs text-amber-300">
+                            <i class="fa-solid fa-shield-halved mr-1.5"></i>
+                            <strong>Safety Requirement:</strong> Participants bring their own skates. Helmets and protective knee/elbow guards must be worn.
+                        </div>
+                    </div>
+
+                    <!-- Group of 3 Specific Prompts -->
+                    <div id="prompt-group-of-3" class="space-y-4 hidden">
+                        <div class="bg-cyan-500/10 border border-cyan-500/30 p-3 rounded-xl text-xs text-cyan-300">
+                            <i class="fa-solid fa-circle-info mr-1"></i>
+                            <strong>Group of 3 Package:</strong> Total is KSh 1,500. Enter the details of all three participants below so each person is registered without number confusion!
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Team / Group Name (e.g. Stema Rollers)</label>
+                            <input type="text" id="group_team_name" placeholder="e.g. Stema Rollers" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400">
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                            <div class="bg-slate-900 p-3 rounded-xl border border-slate-800">
+                                <span class="text-xs font-bold text-cyan-400 block mb-2">Participant 2</span>
+                                <input type="text" id="group_member_2_name" placeholder="Full Name" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white mb-2 focus:outline-none focus:border-cyan-400">
+                                <input type="tel" id="group_member_2_phone" placeholder="Phone Number (07...)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-400">
+                            </div>
+                            <div class="bg-slate-900 p-3 rounded-xl border border-slate-800">
+                                <span class="text-xs font-bold text-cyan-400 block mb-2">Participant 3</span>
+                                <input type="text" id="group_member_3_name" placeholder="Full Name" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white mb-2 focus:outline-none focus:border-cyan-400">
+                                <input type="tel" id="group_member_3_phone" placeholder="Phone Number (07...)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-400">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Group Activity Composition</label>
+                            <select id="group_activity_mode" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400">
+                                <option value="All 3 Cycling">All 3 participants Cycling</option>
+                                <option value="All 3 Roller Skating">All 3 participants Roller Skating</option>
+                                <option value="Mixed (Cycling + Skating + Walking)">Mixed (Cycling, Skating, Walking)</option>
+                                <option value="All 3 Walking">All 3 participants Walking</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Walking Specific Prompts -->
+                    <div id="prompt-walking" class="space-y-4 hidden">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">Walking Distance Category</label>
+                                <select id="walking_distance" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-purple-400">
+                                    <option value="5KM Fun Walk">5KM - Scenic Fun Walk (Families & All fitness levels)</option>
+                                    <option value="10KM Power Walk">10KM - Power & Endurance Walking Route</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">Pace Preference</label>
+                                <select id="walking_pace" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-purple-400">
+                                    <option value="Relaxed Casual Walk">Relaxed & Casual Walk</option>
+                                    <option value="Brisk Fitness Walk">Brisk Fitness Walk</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Primary Participant Contact Information -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-200 mb-3 flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-full bg-emerald-400 text-slate-950 flex items-center justify-center text-xs font-black">2</span>
+                        <span>Participant Contact Information <span class="text-rose-500">*</span></span>
+                    </label>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Full Name (First & Last) <span class="text-rose-500">*</span></label>
+                            <input type="text" id="full_name" required placeholder="e.g. Faith Wanjiku" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Phone Number (M-Pesa) <span class="text-rose-500">*</span></label>
+                            <input type="tel" id="phone_number" required placeholder="0712 345 678" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400">
+                            <span class="text-[11px] text-slate-400">Used for Paystack checkout & ticket lookup</span>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Email Address (Optional / Recommended)</label>
+                            <input type="email" id="email" placeholder="wanjiku@gmail.com" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Emergency Contact (Name & Tel)</label>
+                            <input type="text" id="emergency_contact" placeholder="e.g. John Doe - 0722000000" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Minor / Parent & Guardian Check -->
+                <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-5 space-y-4">
+                    <label class="flex items-center space-x-3 cursor-pointer">
+                        <input type="checkbox" id="is_minor_checkbox" onchange="toggleMinorFields(this.checked)" class="w-4 h-4 rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-0">
+                        <span class="text-xs sm:text-sm font-bold text-slate-200">
+                            Is this registration for a Minor (Under 18 Years)?
+                        </span>
+                    </label>
+
+                    <div id="minor_guardian_fields" class="space-y-3 pt-2 hidden border-t border-slate-800">
+                        <div class="bg-amber-500/10 border border-amber-500/30 p-3 rounded-xl text-xs text-amber-300">
+                            <i class="fa-solid fa-triangle-exclamation mr-1.5"></i>
+                            <strong>Parent/Guardian Consent Requirement:</strong> Minors must have verifiable parent or guardian consent to participate in STEMA movement events.
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">Parent / Guardian Full Name <span class="text-rose-500">*</span></label>
+                                <input type="text" id="parent_name" placeholder="Parent or Guardian's Name" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-400">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">Parent / Guardian Phone Number <span class="text-rose-500">*</span></label>
+                                <input type="tel" id="parent_phone" placeholder="07xx xxx xxx" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-400">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Terms & Conditions Section (Required as per poster and user instructions) -->
+                <div id="terms" class="bg-slate-950 border-2 border-emerald-500/30 rounded-2xl p-6 space-y-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500 text-slate-950 flex items-center justify-center font-black">
+                            <i class="fa-solid fa-bullhorn text-sm"></i>
+                        </div>
+                        <h4 class="font-display font-black text-lg text-white">TERMS & CONDITIONS</h4>
+                    </div>
+
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Please review and agree to the event regulations below before proceeding with your registration:
+                    </p>
+
+                    <div class="space-y-3 text-xs">
+                        
+                        <!-- Checkbox 1: Photography Consent -->
+                        <label class="flex items-start space-x-3 cursor-pointer group">
+                            <input type="checkbox" id="consent_photography" required checked class="mt-0.5 w-4 h-4 rounded bg-slate-900 border-slate-700 text-emerald-400 focus:ring-0">
+                            <div class="text-slate-300 leading-snug">
+                                <strong class="text-emerald-400 font-bold">Photography & Media Release:</strong>
+                                I/We explicitly accept that photographs and videos may be taken during the event and posted on official social media platforms and promotional channels for STEMA.
+                            </div>
+                        </label>
+
+                        <!-- Checkbox 2: Safety Guidelines -->
+                        <label class="flex items-start space-x-3 cursor-pointer group">
+                            <input type="checkbox" id="consent_rules" required checked class="mt-0.5 w-4 h-4 rounded bg-slate-900 border-slate-700 text-emerald-400 focus:ring-0">
+                            <div class="text-slate-300 leading-snug">
+                                <strong class="text-cyan-400 font-bold">Safety First & Helmets:</strong>
+                                I agree to follow all event guidelines, route marshals' instructions, and ensure proper safety gear is worn (helmets are mandatory for all cyclists and roller skaters).
+                            </div>
+                        </label>
+
+                        <!-- Policy 3: Non-Refundable -->
+                        <div class="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800 text-[11px] text-slate-400">
+                            <strong class="text-slate-300 font-semibold">Payment Policy:</strong>
+                            Registration fees are non-refundable except in the unlikely event of total cancellation by the organizers.
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Payment Summary & Paystack Checkout Box -->
+                <div class="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-800 gap-4">
+                        <div>
+                            <span class="text-xs uppercase font-extrabold text-slate-400 tracking-wider">Total Payable Amount</span>
+                            <div class="flex items-baseline gap-2 mt-1">
+                                <span class="font-display font-black text-4xl text-emerald-400" id="total_amount_display">KSh 700</span>
+                                <span class="text-xs text-slate-400" id="fee_breakdown_label">(Cycling Individual: KSh 700)</span>
+                            </div>
+                        </div>
+
+                        <!-- Paystack Secured Badge -->
+                        <div class="bg-emerald-500/10 border border-emerald-500/30 px-4 py-2.5 rounded-xl flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-lock"></i>
+                            </div>
+                            <div>
+                                <span class="text-[10px] uppercase font-bold text-emerald-400 block tracking-wider">Secured by Paystack</span>
+                                <span class="text-xs font-black text-white flex items-center gap-1.5">
+                                    <span>M-Pesa</span> • <span>Card</span> • <span>Bank</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-bolt text-emerald-400 text-sm"></i>
+                            <span><strong>Instant Ticket Delivery:</strong> Once Paystack confirms payment, your official STEMA QR pass will be issued immediately for 1-click download.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div>
+                    <button type="submit" id="submit-btn" class="btn-gleam w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-black text-lg py-4 rounded-2xl shadow-xl shadow-emerald-500/25 hover:scale-[1.01] active:scale-[0.99] transition flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-credit-card"></i>
+                        <span>PAY WITH PAYSTACK & GET TICKET INSTANTLY</span>
+                    </button>
+                    <p class="text-center text-xs text-slate-400 mt-3 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-shield-halved text-emerald-400"></i>
+                        <span>Live Paystack authorization • Zero registration mix-ups • Automated PDF ticket pass</span>
+                    </p>
+                </div>
+
+            </form>
+        </div>
+
+    </div>
+</section>
+
+<!-- Success Registration & Instant Ticket Download Modal -->
+<div id="success-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border-2 border-emerald-500/40 rounded-3xl max-w-md w-full p-6 sm:p-8 text-center space-y-6 shadow-2xl animate-fade-in relative">
+        
+        <div class="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 mx-auto flex items-center justify-center text-3xl ring-8 ring-emerald-500/10">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+
+        <div>
+            <span class="bg-emerald-500/20 text-emerald-400 text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-emerald-500/30">
+                Payment Verified via Paystack
+            </span>
+            <h3 class="font-display font-black text-2xl text-white mt-2">Your STEMA Ticket is Ready!</h3>
+            <p class="text-xs text-slate-400 mt-1">
+                Your spot for <strong class="text-emerald-400">STEMA (Ride • Skate • Walk)</strong> is officially confirmed. Download your pass below or show it at the gate.
+            </p>
+        </div>
+
+        <!-- Ticket Card Preview -->
+        <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 text-left space-y-2">
+            <div class="flex justify-between items-center text-xs text-slate-400 border-b border-slate-800 pb-2">
+                <span>Ticket Reference:</span>
+                <span id="modal-ticket-code" class="font-mono font-black text-emerald-400 text-sm">--</span>
+            </div>
+            <div class="flex justify-between items-center text-xs text-slate-400">
+                <span>Participant:</span>
+                <span id="modal-participant-name" class="font-bold text-white">--</span>
+            </div>
+            <div class="flex justify-between items-center text-xs text-slate-400">
+                <span>Category:</span>
+                <span id="modal-category" class="font-bold text-cyan-400">--</span>
+            </div>
+            <div class="flex justify-between items-center text-xs text-slate-400">
+                <span>Amount Paid:</span>
+                <span id="modal-amount" class="font-bold text-white">--</span>
+            </div>
+            <div class="flex justify-between items-center text-[11px] text-slate-500 pt-1">
+                <span>Paystack Ref:</span>
+                <span id="modal-paystack-ref" class="font-mono text-emerald-400">--</span>
+            </div>
+        </div>
+
+        <!-- Actions: Instant Download & View -->
+        <div class="space-y-2.5">
+            <a id="modal-download-ticket-btn" href="#" class="btn-gleam block w-full bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-black py-3.5 rounded-xl text-sm transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-file-arrow-down text-base"></i>
+                <span>DOWNLOAD TICKET (PDF PASS)</span>
+            </a>
+            
+            <a id="modal-view-ticket-btn" href="#" class="block w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-1.5 border border-slate-700">
+                <i class="fa-solid fa-qrcode"></i>
+                <span>View Digital Pass & QR Code</span>
+            </a>
+
+            <button onclick="closeSuccessModal()" class="block w-full text-slate-400 hover:text-white font-semibold py-2 text-xs transition">
+                Close
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<!-- Test Paystack Simulation Modal (fallback if testing without live network) -->
+<div id="paystack-sim-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl">
+        <div class="flex items-center justify-center gap-2 text-emerald-400 font-bold text-sm">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>Paystack Checkout</span>
+        </div>
+        <p class="text-xs text-slate-300">
+            Confirming Paystack payment of <strong class="text-emerald-400" id="sim-amount">KSh 700</strong> via M-Pesa / Card for ticket <span class="font-mono text-white" id="sim-ticket">--</span>.
+        </p>
+        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs text-left text-slate-400 space-y-1">
+            <div><strong>Payment Channel:</strong> M-Pesa Express (Kenya)</div>
+            <div><strong>Currency:</strong> KES (Kenyan Shillings)</div>
+            <div><strong>Status:</strong> Ready for authorization</div>
+        </div>
+        <div class="space-y-2">
+            <button id="sim-confirm-btn" onclick="confirmSimulatedPayment()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-xl text-sm transition">
+                <i class="fa-solid fa-check-circle mr-1"></i> Authorize & Complete Payment
+            </button>
+            <button onclick="closeSimModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold py-2 rounded-xl text-xs transition">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ANTI MIX-UP LOOKUP SECTION: "Find My Registration / Ticket" -->
+<section id="find-ticket" class="py-16 bg-slate-900/60 border-t border-slate-800 relative">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border-2 border-emerald-500/30 rounded-3xl p-6 sm:p-10 shadow-xl">
+            
+            <div class="text-center max-w-xl mx-auto mb-8">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto text-xl mb-3">
+                    <i class="fa-solid fa-address-book"></i>
+                </div>
+                <h3 class="font-display font-black text-2xl sm:text-3xl text-white">Look Up Your Registration</h3>
+                <p class="text-slate-400 text-xs sm:text-sm mt-1">
+                    Registered already? Search by your <strong class="text-white">Phone Number</strong> or <strong class="text-emerald-400">Ticket Reference</strong> to instantly confirm your details, avoid mix-ups, or print your pass.
+                </p>
+            </div>
+
+            <!-- Search Form -->
+            <form onsubmit="handleSearchRegistration(event)" class="max-w-xl mx-auto flex flex-col sm:flex-row gap-2">
+                <div class="relative flex-grow">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                    <input type="text" id="search_query" required placeholder="Enter Phone (e.g. 0712345678) or STM-..." class="w-full bg-slate-950 border border-slate-700 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-400">
+                </div>
+                <button type="submit" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-6 py-3 rounded-xl text-sm transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-search"></i>
+                    <span>Search</span>
+                </button>
+            </form>
+
+            <!-- Search Results Area -->
+            <div id="search-results-area" class="mt-8 hidden">
+                <div id="search-results-list" class="space-y-4">
+                    <!-- Injected dynamically via JS -->
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+<!-- Event Venue & Safety FAQ Section -->
+<section id="about" class="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center max-w-2xl mx-auto mb-12">
+        <span class="text-xs font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-4 py-1.5 rounded-full border border-emerald-500/30">Essential Information</span>
+        <h2 class="font-display font-black text-3xl sm:text-4xl text-white mt-3">Event Day Guide & FAQ</h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl hover:border-emerald-500/40 transition">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl mb-4">
+                <i class="fa-solid fa-location-dot"></i>
+            </div>
+            <h4 class="font-bold text-lg text-white mb-2">Venue Announcement</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">
+                Specific starting points and loops will be customized depending on your registered category (Cycling tarmac, Skating loop, or Nature Walking route). Registered participants will receive SMS alerts with coordinates.
+            </p>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl hover:border-cyan-500/40 transition">
+            <div class="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xl mb-4">
+                <i class="fa-solid fa-helmet-safety"></i>
+            </div>
+            <h4 class="font-bold text-lg text-white mb-2">Safety & Gear Policy</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">
+                Helmets are strictly required for all cyclists and roller skaters. Route marshals, first aid medics, and water points will be positioned throughout the course.
+            </p>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl hover:border-purple-500/40 transition">
+            <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center text-xl mb-4">
+                <i class="fa-solid fa-camera"></i>
+            </div>
+            <h4 class="font-bold text-lg text-white mb-2">Photography & Socials</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">
+                Our media crew will capture high-resolution photos and drone video footage of the ride. All photos will be uploaded to our official social media pages for participants to download and share!
+            </p>
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    window.PAYSTACK_PUBLIC_KEY = "{{ paystack_pub_key }}";
+</script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Page Not Found | THE RIDE 2026{% endblock %}
+
+{% block content %}
+<div class="py-24 px-4 text-center max-w-lg mx-auto space-y-6">
+    <div class="w-16 h-16 rounded-2xl bg-yellow-400/20 text-yellow-400 flex items-center justify-center mx-auto text-3xl">
+        <i class="fa-solid fa-person-falling"></i>
+    </div>
+    <h1 class="font-display font-black text-4xl text-white">Oops! Lost on the Route?</h1>
+    <p class="text-sm text-slate-400">
+        {{ message or "The page or ticket you are looking for does not exist or has moved." }}
+    </p>
+    <div>
+        <a href="{{ url_for('home') }}" class="inline-flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-black px-6 py-3 rounded-xl text-xs transition">
+            <i class="fa-solid fa-house"></i>
+            <span>Return to Event Home</span>
+        </a>
+    </div>
+</div>
+{% endblock %}

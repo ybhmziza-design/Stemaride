@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}Organizer Portal | STEMA Admin{% endblock %}
+
+{% block content %}
+<div class="py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+    
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-6">
+        <div>
+            <div class="flex items-center gap-2">
+                <span class="bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 px-3 py-0.5 rounded-full text-xs font-black uppercase shadow-md shadow-emerald-500/20">STEMA Dashboard</span>
+                <span class="text-xs text-slate-400">Ride • Skate • Walk Platform</span>
+            </div>
+            <h1 class="font-display font-black text-3xl sm:text-4xl text-white mt-1">Registrations & Gate Manager</h1>
+            <p class="text-xs sm:text-sm text-slate-400 mt-1">
+                Real-time participant database to track registrations, verify phone numbers, manage check-ins, and prevent mix-ups.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <a href="{{ url_for('export_csv') }}" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 transition shadow-lg shadow-emerald-600/20">
+                <i class="fa-solid fa-file-excel"></i>
+                <span>Download CSV / Excel</span>
+            </a>
+            <button onclick="loadRegistrations()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-3 py-2.5 rounded-xl text-xs flex items-center gap-2 border border-slate-700 transition">
+                <i class="fa-solid fa-rotate"></i>
+                <span>Refresh</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Quick Statistics KPI Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+            <span class="text-xs text-slate-400 uppercase font-semibold">Total Registrations</span>
+            <div class="font-black text-3xl text-white mt-1" id="kpi-total-registrations">{{ stats.total_registrations }}</div>
+            <span class="text-[11px] text-slate-400">Total participants</span>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+            <span class="text-xs text-slate-400 uppercase font-semibold">Total Revenue</span>
+            <div class="font-black text-3xl text-yellow-400 mt-1" id="kpi-total-revenue">KSh {{ stats.total_revenue }}</div>
+            <span class="text-[11px] text-slate-400">Expected / Collected</span>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+            <span class="text-xs text-slate-400 uppercase font-semibold">Equipment Hires</span>
+            <div class="font-black text-3xl text-orange-400 mt-1" id="kpi-equipment-hires">{{ stats.equipment_hires }}</div>
+            <span class="text-[11px] text-slate-400">Bikes / Skates reserved</span>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+            <span class="text-xs text-slate-400 uppercase font-semibold">Minors (Under 18)</span>
+            <div class="font-black text-3xl text-amber-400 mt-1" id="kpi-minors">{{ stats.minor_count }}</div>
+            <span class="text-[11px] text-slate-400">Parent consent verified</span>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 col-span-2 lg:col-span-1">
+            <span class="text-xs text-slate-400 uppercase font-semibold">Checked In Today</span>
+            <div class="font-black text-3xl text-emerald-400 mt-1" id="kpi-checked-in">{{ stats.checked_in_count }}</div>
+            <span class="text-[11px] text-slate-400">Gate attendance</span>
+        </div>
+
+    </div>
+
+    <!-- Paystack API Settings Card -->
+    <div class="bg-slate-900 border border-emerald-500/30 rounded-2xl p-5 shadow-lg">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3 mb-4">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm">
+                    <i class="fa-solid fa-credit-card"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-sm text-white">Paystack Payment Settings</h3>
+                    <p class="text-[11px] text-slate-400">Configure your Paystack Live or Test API keys for automated payments & instant ticket delivery.</p>
+                </div>
+            </div>
+            <div class="text-xs">
+                {% if paystack_pub_key.startswith('pk_live') %}
+                <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2.5 py-1 rounded-full font-bold">🟢 LIVE MODE ACTIVE</span>
+                {% elif paystack_pub_key.startswith('pk_test') and not paystack_pub_key.endswith('sample_stemaride') %}
+                <span class="bg-sky-500/20 text-sky-400 border border-sky-500/40 px-2.5 py-1 rounded-full font-bold">🟡 TEST MODE ACTIVE</span>
+                {% else %}
+                <span class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2.5 py-1 rounded-full font-bold">⚙️ DEMO / SIMULATION MODE</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <form onsubmit="savePaystackKeys(event)" class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+            <div class="md:col-span-5">
+                <label class="block text-[11px] font-semibold text-slate-300 mb-1">Paystack Public Key (Starts with pk_test_ or pk_live_)</label>
+                <input type="text" id="cfg-pub-key" value="{{ paystack_pub_key }}" placeholder="pk_test_..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-400">
+            </div>
+            <div class="md:col-span-5">
+                <label class="block text-[11px] font-semibold text-slate-300 mb-1">Paystack Secret Key (Starts with sk_test_ or sk_live_)</label>
+                <input type="password" id="cfg-sec-key" value="{{ paystack_sec_key }}" placeholder="sk_test_..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-400">
+            </div>
+            <div class="md:col-span-2">
+                <button type="submit" id="save-keys-btn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    <span>Save Keys</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+        
+        <div class="relative w-full md:w-96">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input type="text" id="admin-search" oninput="debounceSearch()" placeholder="Search name, phone, ticket #, M-Pesa..." class="w-full bg-slate-950 border border-slate-700 rounded-xl pl-9 pr-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+        </div>
+
+        <div class="flex items-center gap-2 w-full md:w-auto">
+            <span class="text-xs text-slate-400 font-semibold whitespace-nowrap">Filter:</span>
+            <select id="admin-category-filter" onchange="loadRegistrations()" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-yellow-400 w-full md:w-auto">
+                <option value="all">All Categories</option>
+                <option value="cycling">Cycling (KSh 700)</option>
+                <option value="group_of_3">Group of 3 (KSh 1,500)</option>
+                <option value="walking">Walking (KSh 500)</option>
+                <option value="hire_only">Gear Hire Only (KSh 500)</option>
+            </select>
+        </div>
+
+    </div>
+
+    <!-- Registrations Table -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300">
+                <thead class="bg-slate-950 text-slate-400 uppercase font-bold text-[10px] tracking-wider border-b border-slate-800">
+                    <tr>
+                        <th class="py-3 px-4">Ticket Code</th>
+                        <th class="py-3 px-4">Participant Name</th>
+                        <th class="py-3 px-4">Phone / Contact</th>
+                        <th class="py-3 px-4">Category & Amount</th>
+                        <th class="py-3 px-4">Details & Team</th>
+                        <th class="py-3 px-4">M-Pesa / Status</th>
+                        <th class="py-3 px-4 text-center">Gate Check-In</th>
+                        <th class="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="registrations-tbody" class="divide-y divide-slate-800/60 font-medium">
+                    <!-- Populated dynamically -->
+                    <tr>
+                        <td colspan="8" class="text-center py-8 text-slate-500">
+                            <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading registrations...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}
