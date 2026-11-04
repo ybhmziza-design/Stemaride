@@ -1,59 +1,19 @@
 /* STEMA - Lively, Sporty, Dynamic Styles */
 
 :root {
-    --stema-lime: #10b981;
-    --stema-cyan: #06b6d4;
-    --stema-gold: #fbbf24;
-    --stema-rose: #f43f5e;
-    --stema-violet: #8b5cf6;
+    --stema-primary: #10b981;
+    --stema-dark: #0b0f19;
+    --stema-card: #111827;
+    --stema-border: #1f2937;
 }
 
 /* Animations */
-@keyframes floatSlow {
-    0%, 100% {
-        transform: translateY(0px) rotate(0deg);
-    }
-    50% {
-        transform: translateY(-12px) rotate(2deg);
-    }
-}
-
-@keyframes floatReverse {
-    0%, 100% {
-        transform: translateY(0px) rotate(0deg);
-    }
-    50% {
-        transform: translateY(10px) rotate(-2deg);
-    }
-}
-
 @keyframes shimmerText {
-    0% {
-        background-position: 0% 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
-    100% {
-        background-position: 0% 50%;
-    }
-}
-
-@keyframes pulseNeon {
     0%, 100% {
-        box-shadow: 0 0 20px rgba(16, 185, 129, 0.35), 0 0 40px rgba(6, 182, 212, 0.2);
+        opacity: 0.95;
     }
     50% {
-        box-shadow: 0 0 35px rgba(16, 185, 129, 0.6), 0 0 60px rgba(6, 182, 212, 0.35);
-    }
-}
-
-@keyframes pulseGold {
-    0%, 100% {
-        box-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
-    }
-    50% {
-        box-shadow: 0 0 40px rgba(251, 191, 36, 0.6);
+        opacity: 1;
     }
 }
 
@@ -66,42 +26,15 @@
     }
 }
 
-@keyframes buttonGleam {
-    0% {
-        left: -100%;
-    }
-    20%, 100% {
-        left: 200%;
-    }
-}
-
-.animate-float-slow {
-    animation: floatSlow 5s infinite ease-in-out;
-}
-
-.animate-float-reverse {
-    animation: floatReverse 6s infinite ease-in-out;
-}
-
-.animate-neon {
-    animation: pulseNeon 3s infinite ease-in-out;
-}
-
-.animate-gold-glow {
-    animation: pulseGold 2.5s infinite ease-in-out;
-}
-
 .gradient-shimmer-text {
-    background: linear-gradient(90deg, #10b981, #06b6d4, #fbbf24, #f43f5e, #10b981);
-    background-size: 300% 300%;
+    background: linear-gradient(135deg, #ffffff 40%, #10b981 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    animation: shimmerText 6s ease infinite;
 }
 
 .stema-title {
     font-family: 'Outfit', sans-serif;
-    letter-spacing: -0.04em;
+    letter-spacing: -0.03em;
     font-weight: 900;
 }
 

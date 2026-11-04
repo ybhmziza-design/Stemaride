@@ -52,51 +52,49 @@
 </head>
 <body class="bg-[#0B0F19] text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-emerald-400 selection:text-black relative overflow-x-hidden">
     
-    <!-- Lively Animated Background Blobs -->
+    <!-- Subtle Ambient Glow -->
     <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div class="absolute -top-32 left-1/4 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] animate-float-slow"></div>
-        <div class="absolute top-1/3 -right-24 w-[450px] h-[450px] bg-cyan-500/10 rounded-full blur-[130px] animate-float-reverse"></div>
-        <div class="absolute bottom-20 left-10 w-[400px] h-[400px] bg-rose-500/10 rounded-full blur-[140px] animate-float-slow"></div>
+        <div class="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-emerald-500/5 rounded-full blur-[140px]"></div>
     </div>
 
-    <!-- Lively Animated Announcement & Ticker Bar -->
-    <div class="bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-600 text-slate-950 font-extrabold text-xs py-2 px-4 shadow-lg z-50">
+    <!-- Refined Announcement Bar -->
+    <div class="bg-slate-950/90 border-b border-slate-800/80 text-slate-300 text-xs py-2 px-4 z-50">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
             <div class="flex items-center space-x-2">
-                <span class="bg-black text-emerald-300 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-black animate-pulse flex items-center gap-1">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> LIVE EVENT
+                <span class="inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full text-[11px] font-semibold">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> 21 Nov 2026
                 </span>
-                <span class="font-bold">STEMA: Ride • Skate • Walk — Saturday, 21st Nov 2026 (Kikuyu to KEFRI)!</span>
+                <span class="font-medium text-slate-200">STEMA: Ride • Skate • Walk — Route: Kikuyu to KEFRI</span>
             </div>
-            <div class="hidden md:flex items-center space-x-3 text-xs font-black">
-                <span class="hover:underline">🚴 Cycling KSh 700</span>
+            <div class="hidden md:flex items-center space-x-3 text-xs text-slate-400 font-medium">
+                <span>Cycling KSh 700</span>
                 <span>•</span>
-                <span class="hover:underline">⛸️ Skating KSh 500</span>
+                <span>Skating KSh 500</span>
                 <span>•</span>
-                <span class="hover:underline">👥 Group of 3 KSh 1,500</span>
+                <span>Group of 3 KSh 1,500</span>
                 <span>•</span>
-                <span class="hover:underline">👟 Walk KSh 500</span>
+                <span>Walk KSh 500</span>
                 <span>•</span>
-                <span class="hover:underline text-emerald-400">🚲 Bike Hire +KSh 500</span>
+                <span class="text-emerald-400 font-semibold">Bike Rental +KSh 500</span>
             </div>
         </div>
     </div>
 
     <!-- Main Navigation Bar -->
-    <nav class="sticky top-0 z-40 bg-[#0B0F19]/90 backdrop-blur-xl border-b border-slate-800/80 transition-all duration-300">
+    <nav class="sticky top-0 z-40 bg-[#0B0F19]/95 backdrop-blur-xl border-b border-slate-800/80 transition-all duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-20">
                 
                 <!-- Logo & Brand: STEMA -->
                 <a href="{{ url_for('home') }}" class="flex items-center space-x-3 group">
-                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-400 to-cyan-400 flex items-center justify-center text-slate-950 font-display font-black text-2xl shadow-lg shadow-emerald-500/30 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
-                        <i class="fa-solid fa-bolt-lightning text-slate-950 text-xl"></i>
+                    <div class="w-11 h-11 rounded-xl bg-emerald-500 flex items-center justify-center text-slate-950 shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-200">
+                        <i class="fa-solid fa-person-biking text-slate-950 text-xl"></i>
                     </div>
                     <div>
-                        <div class="font-display font-black text-2xl sm:text-3xl tracking-tight text-white flex items-center gap-1">
-                            <span class="gradient-shimmer-text">STEMA</span>
+                        <div class="font-display font-black text-2xl tracking-tight text-white flex items-center gap-1">
+                            <span>STEMA</span>
                         </div>
-                        <div class="text-[10px] font-extrabold tracking-widest text-emerald-400 uppercase -mt-1 flex items-center gap-1">
+                        <div class="text-[10px] font-bold tracking-widest text-emerald-400 uppercase -mt-0.5 flex items-center gap-1">
                             <span>RIDE</span> • <span>SKATE</span> • <span>WALK</span>
                         </div>
                     </div>
@@ -155,9 +153,9 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
                 <!-- Col 1: About STEMA -->
                 <div class="space-y-4 md:col-span-1">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-400 text-slate-950 flex items-center justify-center font-black">
-                            <i class="fa-solid fa-bolt-lightning text-sm"></i>
+                    <div class="flex items-center space-x-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-emerald-500 text-slate-950 flex items-center justify-center font-black">
+                            <i class="fa-solid fa-person-biking text-sm"></i>
                         </div>
                         <span class="font-display font-black text-2xl text-white">STEMA</span>
                     </div>
