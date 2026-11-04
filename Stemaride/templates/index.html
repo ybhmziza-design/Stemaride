@@ -394,10 +394,47 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-slate-300 mb-1">Bicycle Confirmation</label>
-                                <div class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-300 flex items-center gap-2">
-                                    <i class="fa-solid fa-circle-check text-emerald-400"></i>
-                                    <span>Bringing own bicycle (Helmet mandatory)</span>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">🚲 Bicycle Option</label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center gap-3 p-2.5 rounded-xl border border-slate-700 bg-slate-900 cursor-pointer hover:border-emerald-400 transition has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-500/10">
+                                        <input type="radio" name="bike_option" id="bike_own" value="own" checked onchange="onBikeOptionChanged()" class="w-4 h-4 text-emerald-500 focus:ring-0 bg-slate-900 border-slate-600">
+                                        <div>
+                                            <span class="text-xs font-bold text-white block">Bringing My Own Bike</span>
+                                            <span class="text-[11px] text-emerald-400 font-semibold">KSh 700 total</span>
+                                        </div>
+                                    </label>
+                                    <label class="flex items-center gap-3 p-2.5 rounded-xl border border-slate-700 bg-slate-900 cursor-pointer hover:border-emerald-400 transition has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-500/10">
+                                        <input type="radio" name="bike_option" id="bike_hire" value="hire" onchange="onBikeOptionChanged()" class="w-4 h-4 text-emerald-500 focus:ring-0 bg-slate-900 border-slate-600">
+                                        <div>
+                                            <span class="text-xs font-bold text-white block">I Need to Hire a Bike <span class="text-emerald-400">(+KSh 500)</span></span>
+                                            <span class="text-[11px] text-slate-400">KSh 1,200 total — bike at start line</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Hire rental fields — only shown when "hire" is selected -->
+                        <div id="bicycle_hire_details" class="hidden bg-slate-900/90 border border-emerald-500/30 rounded-2xl p-4 space-y-3">
+                            <p class="text-xs text-emerald-300 font-semibold flex items-center gap-2"><i class="fa-solid fa-circle-check"></i> Bike Rental — ready at the Kikuyu starting line</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-300 mb-1">Bicycle Type</label>
+                                    <select id="hire_item_type" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-400">
+                                        <option value="Bicycle (Mountain Bike)">Mountain Bike (Trail &amp; Tarmac)</option>
+                                        <option value="Bicycle (Hybrid / City Bike)">Hybrid / City Bike</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-300 mb-1">Rider Height / Frame Size</label>
+                                    <input type="text" id="hire_shoe_size" placeholder="e.g. 5'8 ft or Medium Frame" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-400">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-300 mb-1">Protective Gear Kit</label>
+                                    <select id="hire_safety_kit" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-400">
+                                        <option value="Helmet Included">Helmet Included</option>
+                                        <option value="Helmet + Knee &amp; Elbow Guards">Helmet + Knee &amp; Elbow Guards</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -483,51 +520,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Bicycle Rental / Hire Add-on (For Cycling: + KSh 500) -->
-                    <div id="bicycle_hire_container" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 transition hover:border-emerald-500/40">
-                        <label class="flex items-start space-x-3 cursor-pointer">
-                            <input type="checkbox" id="checkbox_needs_hire" onchange="toggleHireAddon(this.checked)" class="mt-1 w-4 h-4 rounded bg-slate-950 border-slate-700 text-emerald-500 focus:ring-0">
-                            <div class="space-y-0.5">
-                                <span class="text-sm font-bold text-white flex flex-wrap items-center gap-2">
-                                    <span>Rent / Hire Bicycle for the Event (+ KSh 500)</span>
-                                    <span class="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded-full font-black border border-emerald-500/30">Optional Bike Hire</span>
-                                </span>
-                                <p class="text-xs text-slate-400 leading-snug">
-                                    Don't have your own bicycle? Rent serviced gear delivered directly to the starting line in <strong>Kikuyu</strong>! Total with registration will be <strong>KSh 1,200</strong>.
-                                </p>
-                            </div>
-                        </label>
-
-                        <!-- Rental Specification Fields -->
-                        <div id="hire_options_dropdowns" class="hidden mt-4 pt-4 border-t border-slate-800 space-y-3">
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-300 mb-1">Bicycle Type</label>
-                                    <select id="hire_item_type" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-400">
-                                        <option value="Bicycle (Mountain Bike)">Mountain Bike (Trail & Tarmac)</option>
-                                        <option value="Bicycle (Hybrid / City Bike)">Hybrid / City Bike</option>
-                                    </select>
-                                </div>
-                                <div id="skate_shoe_size_box">
-                                    <label id="hire_size_label" class="block text-xs font-semibold text-slate-300 mb-1">Rider Height / Bike Frame</label>
-                                    <input type="text" id="hire_shoe_size" placeholder="e.g. 5'8 ft or Medium Frame" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-400">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-300 mb-1">Protective Gear Kit</label>
-                                    <select id="hire_safety_kit" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-400">
-                                        <option value="Helmet Included">Helmet Included</option>
-                                        <option value="Helmet + Knee & Elbow Guards">Helmet + Knee & Elbow Guards</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-[11px] text-emerald-300 flex items-center gap-2">
-                                <i class="fa-solid fa-circle-check"></i>
-                                <span>Your bicycle will be reserved under your Ticket ID for pickup at the <strong>Kikuyu</strong> starting point.</span>
-                            </div>
-                        </div>
-                    </div>
-
                 </div>
 
                 <!-- Primary Participant Contact Information -->

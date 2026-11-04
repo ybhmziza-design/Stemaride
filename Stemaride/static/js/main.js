@@ -78,9 +78,6 @@ function onCategoryChanged() {
     const promptGroup = document.getElementById('prompt-group-of-3');
     const promptWalking = document.getElementById('prompt-walking');
     const heading = document.getElementById('prompt-heading');
-    const bikeHireContainer = document.getElementById('bicycle_hire_container');
-    const hireCheckbox = document.getElementById('checkbox_needs_hire');
-    const hireDropdowns = document.getElementById('hire_options_dropdowns');
 
     // Hide all prompts first
     if (promptCycling) promptCycling.classList.add('hidden');
@@ -88,92 +85,66 @@ function onCategoryChanged() {
     if (promptGroup) promptGroup.classList.add('hidden');
     if (promptWalking) promptWalking.classList.add('hidden');
 
-    let basePrice = 700;
-    let label = "Cycling Individual";
-
     if (category === 'cycling') {
         if (promptCycling) promptCycling.classList.remove('hidden');
         if (heading) heading.innerText = "Cycling Route & Distance Options";
-        if (bikeHireContainer) bikeHireContainer.classList.remove('hidden');
-        basePrice = 700;
-        label = "Cycling Individual";
+        // Reset bike option to 'own' when switching to cycling
+        const bikeOwnRadio = document.getElementById('bike_own');
+        if (bikeOwnRadio) bikeOwnRadio.checked = true;
+        const hireDetails = document.getElementById('bicycle_hire_details');
+        if (hireDetails) hireDetails.classList.add('hidden');
+        calculateTotal(700, 'Cycling Individual', 'cycling');
     } else if (category === 'skating') {
         if (promptSkating) promptSkating.classList.remove('hidden');
         if (heading) heading.innerText = "Skating Options";
-        // Flat 500 for skating (no hiring vs own skates distinction)
-        if (bikeHireContainer) bikeHireContainer.classList.add('hidden');
-        if (hireCheckbox) hireCheckbox.checked = false;
-        if (hireDropdowns) hireDropdowns.classList.add('hidden');
-        basePrice = 500;
-        label = "Skating";
+        calculateTotal(500, 'Skating', 'skating');
     } else if (category === 'group_of_3') {
         if (promptGroup) promptGroup.classList.remove('hidden');
         if (heading) heading.innerText = "Group of 3 Participants Registration";
-        if (bikeHireContainer) bikeHireContainer.classList.add('hidden');
-        if (hireCheckbox) hireCheckbox.checked = false;
-        if (hireDropdowns) hireDropdowns.classList.add('hidden');
-        basePrice = 1500;
-        label = "Group of 3 (Squad)";
+        calculateTotal(1500, 'Group of 3 (Squad)', 'group_of_3');
     } else if (category === 'walking') {
         if (promptWalking) promptWalking.classList.remove('hidden');
         if (heading) heading.innerText = "Walking Route & Pace Preferences";
-        if (bikeHireContainer) bikeHireContainer.classList.add('hidden');
-        if (hireCheckbox) hireCheckbox.checked = false;
-        if (hireDropdowns) hireDropdowns.classList.add('hidden');
-        basePrice = 500;
-        label = "Walking Category";
+        calculateTotal(500, 'Walking Category', 'walking');
     }
-
-    calculateTotal(basePrice, label, category);
 }
 
-function toggleHireAddon(isChecked) {
-    const dropdowns = document.getElementById('hire_options_dropdowns');
-    if (dropdowns) {
-        if (isChecked) {
-            dropdowns.classList.remove('hidden');
+function onBikeOptionChanged() {
+    const bikeHireRadio = document.getElementById('bike_hire');
+    const hireDetails = document.getElementById('bicycle_hire_details');
+    const isHire = bikeHireRadio && bikeHireRadio.checked;
+
+    if (hireDetails) {
+        if (isHire) {
+            hireDetails.classList.remove('hidden');
         } else {
-            dropdowns.classList.add('hidden');
+            hireDetails.classList.add('hidden');
         }
     }
-    
-    // Recalculate with current category
-    const selectedRadio = document.querySelector('input[name="category"]:checked');
-    const category = selectedRadio ? selectedRadio.value : 'cycling';
-    let basePrice = 700;
-    let label = "Cycling Individual";
-    if (category === 'skating') {
-        basePrice = 500;
-        label = "Skating";
-    } else if (category === 'group_of_3') {
-        basePrice = 1500;
-        label = "Group of 3 (Squad)";
-    } else if (category === 'walking') {
-        basePrice = 500;
-        label = "Walking Category";
+
+    // Update price
+    if (isHire) {
+        calculateTotal(700, 'Cycling Individual', 'cycling', true);
+    } else {
+        calculateTotal(700, 'Cycling Individual', 'cycling', false);
     }
-
-    calculateTotal(basePrice, label, category);
 }
 
-function handleHireTypeChange(val) {
-    const sizeLabel = document.getElementById('hire_size_label');
-    const sizeInput = document.getElementById('hire_shoe_size');
-    if (!sizeLabel || !sizeInput) return;
-
-    sizeLabel.innerText = 'Rider Height / Bike Frame';
-    sizeInput.placeholder = 'e.g. 5\'8 ft or Medium Frame';
-}
-
-function calculateTotal(basePrice, label, category) {
+function calculateTotal(basePrice, label, category, forceHire) {
     const totalDisplay = document.getElementById('total_amount_display');
     const feeBreakdown = document.getElementById('fee_breakdown_label');
-    const hireCheckbox = document.getElementById('checkbox_needs_hire');
-    
+
     let hireCost = 0;
-    // Only cycling has optional bicycle hire
-    if (category === 'cycling' && hireCheckbox && hireCheckbox.checked) {
-        hireCost = 500;
+    if (category === 'cycling') {
+        // Check if forceHire was explicitly passed; otherwise read the radio
+        let isHire = false;
+        if (typeof forceHire !== 'undefined') {
+            isHire = forceHire;
+        } else {
+            const bikeHireRadio = document.getElementById('bike_hire');
+            isHire = bikeHireRadio && bikeHireRadio.checked;
+        }
+        if (isHire) hireCost = 500;
     }
 
     const total = basePrice + hireCost;
@@ -190,6 +161,7 @@ function calculateTotal(basePrice, label, category) {
         feeBreakdown.innerText = breakdown;
     }
 }
+
 
 function toggleMinorFields(isMinor) {
     const fields = document.getElementById('minor_guardian_fields');
@@ -231,9 +203,9 @@ async function handleRegistration(e) {
     const isMinorBox = document.getElementById('is_minor_checkbox');
     const isMinor = isMinorBox ? isMinorBox.checked : false;
 
-    // Check equipment hire
-    const hireCheckbox = document.getElementById('checkbox_needs_hire');
-    const needsHire = hireCheckbox ? hireCheckbox.checked : false;
+    // Check equipment hire — now driven by bike_option radio (cycling only)
+    const bikeHireRadio = document.getElementById('bike_hire');
+    const needsHire = selectedCategory === 'cycling' && bikeHireRadio && bikeHireRadio.checked;
 
     const hireDetails = {};
     if (needsHire) {
