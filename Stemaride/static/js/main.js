@@ -78,6 +78,9 @@ function onCategoryChanged() {
     const promptGroup = document.getElementById('prompt-group-of-3');
     const promptWalking = document.getElementById('prompt-walking');
     const heading = document.getElementById('prompt-heading');
+    const bikeHireContainer = document.getElementById('bicycle_hire_container');
+    const hireCheckbox = document.getElementById('checkbox_needs_hire');
+    const hireDropdowns = document.getElementById('hire_options_dropdowns');
 
     // Hide all prompts first
     if (promptCycling) promptCycling.classList.add('hidden');
@@ -91,21 +94,32 @@ function onCategoryChanged() {
     if (category === 'cycling') {
         if (promptCycling) promptCycling.classList.remove('hidden');
         if (heading) heading.innerText = "Cycling Route & Distance Options";
+        if (bikeHireContainer) bikeHireContainer.classList.remove('hidden');
         basePrice = 700;
         label = "Cycling Individual";
     } else if (category === 'skating') {
         if (promptSkating) promptSkating.classList.remove('hidden');
-        if (heading) heading.innerText = "Skating Loop & Gear Confirmation";
+        if (heading) heading.innerText = "Skating Options";
+        // Flat 500 for skating (no hiring vs own skates distinction)
+        if (bikeHireContainer) bikeHireContainer.classList.add('hidden');
+        if (hireCheckbox) hireCheckbox.checked = false;
+        if (hireDropdowns) hireDropdowns.classList.add('hidden');
         basePrice = 500;
-        label = "Roller / Inline Skating";
+        label = "Skating";
     } else if (category === 'group_of_3') {
         if (promptGroup) promptGroup.classList.remove('hidden');
         if (heading) heading.innerText = "Group of 3 Participants Registration";
+        if (bikeHireContainer) bikeHireContainer.classList.add('hidden');
+        if (hireCheckbox) hireCheckbox.checked = false;
+        if (hireDropdowns) hireDropdowns.classList.add('hidden');
         basePrice = 1500;
         label = "Group of 3 (Squad)";
     } else if (category === 'walking') {
         if (promptWalking) promptWalking.classList.remove('hidden');
         if (heading) heading.innerText = "Walking Route & Pace Preferences";
+        if (bikeHireContainer) bikeHireContainer.classList.add('hidden');
+        if (hireCheckbox) hireCheckbox.checked = false;
+        if (hireDropdowns) hireDropdowns.classList.add('hidden');
         basePrice = 500;
         label = "Walking Category";
     }
@@ -113,15 +127,67 @@ function onCategoryChanged() {
     calculateTotal(basePrice, label, category);
 }
 
+function toggleHireAddon(isChecked) {
+    const dropdowns = document.getElementById('hire_options_dropdowns');
+    if (dropdowns) {
+        if (isChecked) {
+            dropdowns.classList.remove('hidden');
+        } else {
+            dropdowns.classList.add('hidden');
+        }
+    }
+    
+    // Recalculate with current category
+    const selectedRadio = document.querySelector('input[name="category"]:checked');
+    const category = selectedRadio ? selectedRadio.value : 'cycling';
+    let basePrice = 700;
+    let label = "Cycling Individual";
+    if (category === 'skating') {
+        basePrice = 500;
+        label = "Skating";
+    } else if (category === 'group_of_3') {
+        basePrice = 1500;
+        label = "Group of 3 (Squad)";
+    } else if (category === 'walking') {
+        basePrice = 500;
+        label = "Walking Category";
+    }
+
+    calculateTotal(basePrice, label, category);
+}
+
+function handleHireTypeChange(val) {
+    const sizeLabel = document.getElementById('hire_size_label');
+    const sizeInput = document.getElementById('hire_shoe_size');
+    if (!sizeLabel || !sizeInput) return;
+
+    sizeLabel.innerText = 'Rider Height / Bike Frame';
+    sizeInput.placeholder = 'e.g. 5\'8 ft or Medium Frame';
+}
+
 function calculateTotal(basePrice, label, category) {
     const totalDisplay = document.getElementById('total_amount_display');
     const feeBreakdown = document.getElementById('fee_breakdown_label');
+    const hireCheckbox = document.getElementById('checkbox_needs_hire');
     
+    let hireCost = 0;
+    // Only cycling has optional bicycle hire
+    if (category === 'cycling' && hireCheckbox && hireCheckbox.checked) {
+        hireCost = 500;
+    }
+
+    const total = basePrice + hireCost;
+
     if (totalDisplay) {
-        totalDisplay.innerText = `KSh ${basePrice.toLocaleString()}`;
+        totalDisplay.innerText = `KSh ${total.toLocaleString()}`;
     }
     if (feeBreakdown) {
-        feeBreakdown.innerText = `(${label}: KSh ${basePrice.toLocaleString()})`;
+        let breakdown = `(${label}: KSh ${basePrice.toLocaleString()}`;
+        if (hireCost > 0) {
+            breakdown += ` + Bike Rental: KSh 500 = KSh ${total.toLocaleString()}`;
+        }
+        breakdown += `)`;
+        feeBreakdown.innerText = breakdown;
     }
 }
 
@@ -164,6 +230,20 @@ async function handleRegistration(e) {
     const selectedCategory = selectedRadio ? selectedRadio.value : 'cycling';
     const isMinorBox = document.getElementById('is_minor_checkbox');
     const isMinor = isMinorBox ? isMinorBox.checked : false;
+
+    // Check equipment hire
+    const hireCheckbox = document.getElementById('checkbox_needs_hire');
+    const needsHire = hireCheckbox ? hireCheckbox.checked : false;
+
+    const hireDetails = {};
+    if (needsHire) {
+        const itemEl = document.getElementById('hire_item_type');
+        const sizeEl = document.getElementById('hire_shoe_size');
+        const kitEl = document.getElementById('hire_safety_kit');
+        hireDetails.hire_item = itemEl ? itemEl.value : (selectedCategory === 'skating' ? 'Roller Skates' : 'Bicycle');
+        hireDetails.size = sizeEl && sizeEl.value.trim() ? sizeEl.value.trim() : 'Standard';
+        hireDetails.safety_kit = kitEl ? kitEl.value : 'Helmet Included';
+    }
 
     // Prepare category details
     const categoryDetails = {};
@@ -216,10 +296,10 @@ async function handleRegistration(e) {
         phone_number: phoneEl ? phoneEl.value.trim() : '',
         email: emailEl ? emailEl.value.trim() : '',
         category: selectedCategory,
-        needs_hire: false,
+        needs_hire: needsHire,
+        hire_details: hireDetails,
         category_details: categoryDetails,
         group_members: groupMembers,
-        hire_details: {},
         is_minor: isMinor,
         parent_name: (isMinor && parentNameEl) ? parentNameEl.value.trim() : '',
         parent_phone: (isMinor && parentPhoneEl) ? parentPhoneEl.value.trim() : '',

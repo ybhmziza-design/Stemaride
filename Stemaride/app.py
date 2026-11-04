@@ -143,9 +143,12 @@ def api_register():
         }
         
         calculated_total = base_rates.get(category, 700)
+        needs_hire = bool(data.get('needs_hire'))
+        if needs_hire:
+            calculated_total += 500
+
         data['amount_due'] = calculated_total
-        data['needs_hire'] = 0
-        data['hire_details'] = {}
+        data['needs_hire'] = 1 if needs_hire else 0
         
         # Category label mapping
         labels = {

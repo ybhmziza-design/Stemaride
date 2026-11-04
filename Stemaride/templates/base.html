@@ -66,16 +66,18 @@
                 <span class="bg-black text-emerald-300 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-black animate-pulse flex items-center gap-1">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> LIVE EVENT
                 </span>
-                <span class="font-bold">STEMA: Ride • Skate • Walk — Saturday, 21st November 2026!</span>
+                <span class="font-bold">STEMA: Ride • Skate • Walk — Saturday, 21st Nov 2026 (Kikuyu to KEFRI)!</span>
             </div>
-            <div class="hidden md:flex items-center space-x-4 text-xs font-black">
+            <div class="hidden md:flex items-center space-x-3 text-xs font-black">
                 <span class="hover:underline">🚴 Cycling KSh 700</span>
+                <span>•</span>
+                <span class="hover:underline">⛸️ Skating KSh 500</span>
                 <span>•</span>
                 <span class="hover:underline">👥 Group of 3 KSh 1,500</span>
                 <span>•</span>
                 <span class="hover:underline">👟 Walk KSh 500</span>
                 <span>•</span>
-                <span class="hover:underline">⛸️ Gear Hire KSh 500</span>
+                <span class="hover:underline text-emerald-400">🚲 Bike Hire +KSh 500</span>
             </div>
         </div>
     </div>
@@ -175,11 +177,12 @@
                     <h3 class="font-bold text-white uppercase tracking-wider text-xs mb-4">Upcoming Edition</h3>
                     <ul class="space-y-2 text-xs">
                         <li><span class="text-emerald-400 font-semibold">Date:</span> 21st November 2026</li>
-                        <li><span class="text-emerald-400 font-semibold">Venue:</span> Announced per category</li>
+                        <li><span class="text-emerald-400 font-semibold">Route / Venue:</span> Kikuyu to KEFRI</li>
                         <li><a href="#categories" class="hover:text-white transition">🚴 Cycling (KSh 700)</a></li>
                         <li><a href="#categories" class="hover:text-white transition">👥 Group of 3 (KSh 1,500)</a></li>
+                        <li><a href="#categories" class="hover:text-white transition">⛸️ Skating (KSh 500)</a></li>
                         <li><a href="#categories" class="hover:text-white transition">👟 Walking (KSh 500)</a></li>
-                        <li><a href="#categories" class="hover:text-white transition">⛸️ Gear Rental (KSh 500)</a></li>
+                        <li><a href="#categories" class="hover:text-white transition">🚲 Bike Rental (+KSh 500)</a></li>
                     </ul>
                 </div>
 
@@ -208,11 +211,11 @@
             </div>
 
             <div class="border-t border-slate-900 pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
-                <p>&copy; STEMA. All rights reserved. Designed for active movement & memories.</p>
-                <p class="mt-2 sm:mt-0 flex items-center space-x-3">
-                    <a href="{{ url_for('admin_view') }}" class="text-slate-400 hover:text-white flex items-center gap-1">
-                        <i class="fa-solid fa-lock text-[10px]"></i> Admin Portal
-                    </a>
+                <p id="admin-secret-trigger" class="cursor-pointer select-none text-slate-500 hover:text-slate-400 transition" title="STEMA 2026">
+                    &copy; 2026 STEMA. All rights reserved. Designed for active movement & memories.
+                </p>
+                <p class="mt-2 sm:mt-0 text-[11px] text-slate-500">
+                    Route: Kikuyu to KEFRI • Saturday, 21st November 2026
                 </p>
             </div>
         </div>
@@ -229,6 +232,24 @@
             });
             document.querySelectorAll('.mobile-nav-link').forEach(link => {
                 link.addEventListener('click', () => mobileMenu.classList.add('hidden'));
+            });
+        }
+
+        // Secret 5-clicks trigger on "2026 STEMA. All rights reserved." to open Organizer Portal
+        let adminClicks = 0;
+        let adminTimer = null;
+        const secretTrigger = document.getElementById('admin-secret-trigger');
+        if (secretTrigger) {
+            secretTrigger.addEventListener('click', () => {
+                adminClicks++;
+                clearTimeout(adminTimer);
+                adminTimer = setTimeout(() => {
+                    adminClicks = 0;
+                }, 2500);
+                if (adminClicks >= 5) {
+                    adminClicks = 0;
+                    window.location.href = "{{ url_for('admin_view') }}";
+                }
             });
         }
     </script>
