@@ -145,9 +145,18 @@
              ondragleave="this.classList.remove('border-purple-400')"
              ondrop="handleGalleryDrop(event)">
             <i class="fa-solid fa-cloud-arrow-up text-purple-400 text-3xl mb-2"></i>
-            <p class="text-sm font-bold text-white">Click or drag &amp; drop photos here</p>
-            <p class="text-xs text-slate-400 mt-1">JPG, PNG, GIF, WEBP · Multiple files allowed · No size limit</p>
+            <p class="text-sm font-bold text-white">Tap or Drag &amp; Drop photos here</p>
+            <p class="text-xs text-slate-400 mt-1">Select multiple pictures from your phone gallery or computer</p>
+            <div class="mt-3 flex flex-wrap justify-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500/20 text-purple-300 text-xs font-semibold hover:bg-purple-500/30">
+                    <i class="fa-solid fa-images"></i> Choose from Phone Gallery
+                </span>
+                <label onclick="event.stopPropagation()" for="gallery-camera-input" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700 cursor-pointer">
+                    <i class="fa-solid fa-camera"></i> Take New Photo
+                </label>
+            </div>
             <input type="file" id="gallery-file-input" multiple accept="image/*" class="hidden" onchange="uploadGalleryPhotos(this.files)">
+            <input type="file" id="gallery-camera-input" accept="image/*" capture="environment" class="hidden" onchange="uploadGalleryPhotos(this.files)">
         </div>
 
         <!-- Upload Progress -->

@@ -272,12 +272,10 @@ async function loadAdminGallery() {
                 <div class="p-2">
                     <p class="text-[11px] font-semibold text-slate-200 truncate" title="${photo.caption}">${photo.caption}</p>
                     <div class="flex items-center justify-between mt-1 text-[10px] text-slate-500">
-                        <span>${photo.source === 'r2' ? 'R2 Cloud' : 'Local'}</span>
-                        ${photo.source === 'r2' ? `
-                            <button onclick="deleteGalleryPhoto('${photo.key}')" class="text-rose-400 hover:text-rose-300 transition" title="Delete Photo">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
-                        ` : ''}
+                        <span class="px-1.5 py-0.5 rounded ${photo.source === 'r2' ? 'bg-purple-900/40 text-purple-300' : 'bg-slate-800 text-slate-400'}">${photo.source === 'r2' ? 'Cloud' : 'Local'}</span>
+                        <button onclick="deleteGalleryPhoto('${photo.key}')" class="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 px-2 py-1 rounded transition text-xs font-semibold" title="Delete Photo">
+                            <i class="fa-solid fa-trash-can mr-1"></i>Delete
+                        </button>
                     </div>
                 </div>
             `;
@@ -345,7 +343,7 @@ async function uploadGalleryPhotos(files) {
 }
 
 async function deleteGalleryPhoto(key) {
-    if (!confirm("Are you sure you want to delete this photo from Cloudflare R2?")) return;
+    if (!confirm("Are you sure you want to delete this photo from the gallery?")) return;
 
     try {
         const res = await fetch('/api/gallery/delete', {

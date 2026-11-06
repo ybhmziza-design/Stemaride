@@ -8,6 +8,11 @@ import requests
 import uuid
 import mimetypes
 
+import sys
+user_site = os.path.expanduser('~/.local/lib/python3.14/site-packages')
+if os.path.exists(user_site) and user_site not in sys.path:
+    sys.path.insert(0, user_site)
+
 try:
     import boto3
     from botocore.client import Config
@@ -447,25 +452,26 @@ def allowed_image(filename):
 def api_gallery_photos():
     """Return list of all gallery photos from R2."""
     client, cfg = get_r2_client()
+    # Gather any local static images first
+    local_imgs = []
+    images_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'images')
+    if os.path.exists(images_dir):
+        for f in sorted(os.listdir(images_dir)):
+            if f.startswith('gallery_') and allowed_image(f):
+                local_imgs.append({
+                    'key': f,
+                    'url': f'/static/images/{f}',
+                    'caption': f.replace('gallery_', '').rsplit('.', 1)[0].replace('_', ' ').title(),
+                    'source': 'local'
+                })
+
     if not client:
-        # Fallback: return local static images
-        local_imgs = []
-        images_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'images')
-        if os.path.exists(images_dir):
-            for f in sorted(os.listdir(images_dir)):
-                if f.startswith('gallery_') and allowed_image(f):
-                    local_imgs.append({
-                        'key': f,
-                        'url': f'/static/images/{f}',
-                        'caption': f.replace('gallery_', '').rsplit('.', 1)[0].replace('_', ' ').title(),
-                        'source': 'local'
-                    })
         return jsonify({'success': True, 'photos': local_imgs, 'source': 'local',
                         'boto3_available': BOTO3_AVAILABLE})
 
     try:
         response = client.list_objects_v2(Bucket=cfg['bucket'], Prefix='gallery/')
-        photos = []
+        r2_photos = []
         for obj in response.get('Contents', []):
             key = obj['Key']
             if key == 'gallery/':
@@ -474,7 +480,7 @@ def api_gallery_photos():
             if not allowed_image(filename):
                 continue
             caption = filename.rsplit('.', 1)[0].replace('_', ' ').replace('-', ' ').title()
-            photos.append({
+            r2_photos.append({
                 'key': key,
                 'url': f"{cfg['public_url']}/{key}",
                 'caption': caption,
@@ -482,11 +488,13 @@ def api_gallery_photos():
                 'last_modified': str(obj.get('LastModified', '')),
                 'source': 'r2'
             })
-        # Sort by last_modified desc (newest first)
-        photos.sort(key=lambda x: x.get('last_modified', ''), reverse=True)
-        return jsonify({'success': True, 'photos': photos, 'count': len(photos), 'source': 'r2'})
+        # Sort R2 photos by last_modified desc (newest first)
+        r2_photos.sort(key=lambda x: x.get('last_modified', ''), reverse=True)
+        # Combine R2 photos + initial local photos
+        all_photos = r2_photos + local_imgs
+        return jsonify({'success': True, 'photos': all_photos, 'count': len(all_photos), 'source': 'r2'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({'success': True, 'photos': local_imgs, 'error': str(e), 'source': 'local'})
 
 @app.route('/api/gallery/upload', methods=['POST'])
 def api_gallery_upload():
@@ -536,22 +544,36 @@ def api_gallery_upload():
 
 @app.route('/api/gallery/delete', methods=['POST'])
 def api_gallery_delete():
-    """Delete a photo from R2. Admin only."""
+    """Delete a photo from R2 or local static folder. Admin only."""
     if not session.get('is_admin'):
         return jsonify({'success': False, 'error': 'Unauthorized'}), 401
 
     data = request.get_json() or {}
     key = data.get('key', '').strip()
-    if not key or not key.startswith('gallery/'):
+    if not key:
         return jsonify({'success': False, 'error': 'Invalid key'}), 400
 
+    # If it's a local static photo (starts with gallery_)
+    if not key.startswith('gallery/'):
+        safe_name = os.path.basename(key)
+        local_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'images', safe_name)
+        if os.path.exists(local_path):
+            try:
+                os.remove(local_path)
+                return jsonify({'success': True, 'message': 'Local photo deleted successfully.'})
+            except Exception as e:
+                return jsonify({'success': False, 'error': f'Failed to delete local file: {str(e)}'}), 500
+        else:
+            return jsonify({'success': False, 'error': 'File not found'}), 404
+
+    # If it's in Cloudflare R2
     client, cfg = get_r2_client()
     if not client:
         return jsonify({'success': False, 'error': 'R2 not available'}), 503
 
     try:
         client.delete_object(Bucket=cfg['bucket'], Key=key)
-        return jsonify({'success': True, 'message': f'Photo deleted successfully.'})
+        return jsonify({'success': True, 'message': 'Photo deleted from Cloudflare R2.'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
