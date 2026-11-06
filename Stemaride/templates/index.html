@@ -97,13 +97,13 @@
         <span class="text-slate-600">•</span>
         <span>👥 Group of 3 KSh 1,500</span>
         <span class="text-slate-600">•</span>
-        <span>⛸️ Skating KSh 500</span>
+        <span>⛸️ Skating KSh 700</span>
         <span class="text-slate-600">•</span>
         <span>👟 Walking KSh 500</span>
         <span class="text-slate-600">•</span>
         <span class="text-emerald-400">🚲 Bike Hire +KSh 500</span>
         <span class="text-slate-600">•</span>
-        <span>💳 Instant M-Pesa &amp; Card via Paystack</span>
+        <span>💳 Instant M-Pesa &amp; Card via IntaSend</span>
         <span class="text-slate-600">•</span>
         <span>⚡ Scannable QR Ticket Pass</span>
         <span class="text-slate-600">•</span>
@@ -114,13 +114,13 @@
         <span class="text-slate-600">•</span>
         <span>👥 Group of 3 KSh 1,500</span>
         <span class="text-slate-600">•</span>
-        <span>⛸️ Skating KSh 500</span>
+        <span>⛸️ Skating KSh 700</span>
         <span class="text-slate-600">•</span>
         <span>👟 Walking KSh 500</span>
         <span class="text-slate-600">•</span>
         <span class="text-emerald-400">🚲 Bike Hire +KSh 500</span>
         <span class="text-slate-600">•</span>
-        <span>💳 Instant M-Pesa &amp; Card via Paystack</span>
+        <span>💳 Instant M-Pesa &amp; Card via IntaSend</span>
         <span class="text-slate-600">•</span>
         <span>⚡ Scannable QR Ticket Pass</span>
         <span class="text-slate-600">•</span>
@@ -215,10 +215,10 @@
                     <div class="border-t border-slate-800 pt-3.5">
                         <span class="text-[11px] text-slate-400 uppercase font-semibold block">Registration</span>
                         <div class="flex items-baseline gap-1 mt-1">
-                            <span class="text-2xl font-black text-white">KSh 500</span>
+                            <span class="text-2xl font-black text-white">KSh 700</span>
                             <span class="text-xs text-slate-400">/ person</span>
                         </div>
-                        <span class="text-[11px] text-slate-400 font-medium block mt-0.5">Flat entry rate</span>
+                        <span class="text-[11px] text-emerald-400 font-medium block mt-0.5">Skate rental optional (+KSh 500)</span>
                     </div>
                     <button class="w-full mt-4 bg-slate-800 hover:bg-emerald-500 hover:text-slate-950 text-white font-bold py-2.5 rounded-xl text-xs sm:text-sm transition flex items-center justify-center gap-2">
                         <span>Select Skating</span>
@@ -298,7 +298,7 @@
                             <div class="p-3 text-center rounded-xl border border-slate-800 bg-slate-950/60 peer-checked:border-emerald-400 peer-checked:bg-emerald-500/10 transition">
                                 <i class="fa-solid fa-person-skating text-emerald-400 text-lg block mb-1"></i>
                                 <span class="font-bold text-xs text-white block">Skating</span>
-                                <span class="text-[11px] text-emerald-400 font-bold">KSh 500</span>
+                                <span class="text-[11px] text-emerald-400 font-bold">KSh 700</span>
                             </div>
                         </label>
 
@@ -484,7 +484,7 @@
                         <div>
                             <label class="block text-xs font-semibold text-slate-300 mb-1">Phone Number (M-Pesa) <span class="text-rose-500">*</span></label>
                             <input type="tel" id="phone_number" required placeholder="0712 345 678" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400">
-                            <span class="text-[11px] text-slate-400">Used for Paystack checkout & ticket lookup</span>
+                            <span class="text-[11px] text-slate-400">Used for IntaSend M-Pesa STK push &amp; ticket lookup</span>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-300 mb-1">Email Address (Optional / Recommended)</label>
@@ -557,6 +557,15 @@
                             </div>
                         </label>
 
+
+                        <!-- Checkbox 3: Liability Waiver -->
+                        <label class="flex items-start space-x-3 cursor-pointer group">
+                            <input type="checkbox" id="consent_liability" required class="mt-0.5 w-4 h-4 rounded bg-slate-900 border-slate-700 text-rose-400 focus:ring-0">
+                            <div class="text-slate-300 leading-snug">
+                                <strong class="text-rose-400 font-bold">&#9888;&#65039; Liability Waiver &amp; Assumption of Risk:</strong>
+                                I acknowledge that participation is entirely at my own risk. <strong class="text-white">In the case of any accident which may cause injury, STEMA and its organisers shall not be held liable in any way whatsoever.</strong> I voluntarily assume all risks associated with this event.
+                            </div>
+                        </label>
                         <!-- Policy 3: Non-Refundable -->
                         <div class="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800 text-[11px] text-slate-400">
                             <strong class="text-slate-300 font-semibold">Payment Policy:</strong>
@@ -566,7 +575,7 @@
                     </div>
                 </div>
 
-                <!-- Payment Summary & Paystack Checkout Box -->
+                <!-- Payment Summary & IntaSend Checkout Box -->
                 <div class="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-6">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-800 gap-4">
                         <div>
@@ -577,13 +586,13 @@
                             </div>
                         </div>
 
-                        <!-- Paystack Secured Badge -->
+                        <!-- IntaSend Secured Badge -->
                         <div class="bg-emerald-500/10 border border-emerald-500/30 px-4 py-2.5 rounded-xl flex items-center gap-3">
                             <div class="w-9 h-9 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">
                                 <i class="fa-solid fa-lock"></i>
                             </div>
                             <div>
-                                <span class="text-[10px] uppercase font-bold text-emerald-400 block tracking-wider">Secured by Paystack</span>
+                                <span class="text-[10px] uppercase font-bold text-emerald-400 block tracking-wider">Secured by IntaSend</span>
                                 <span class="text-xs font-black text-white flex items-center gap-1.5">
                                     <span>M-Pesa</span> • <span>Card</span> • <span>Bank</span>
                                 </span>
@@ -593,21 +602,21 @@
 
                     <div class="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
                         <div class="flex items-center gap-2">
-                            <i class="fa-solid fa-bolt text-emerald-400 text-sm"></i>
-                            <span><strong>Instant Ticket Delivery:</strong> Once Paystack confirms payment, your official STEMA QR pass will be issued immediately for 1-click download.</span>
+                            <i class="fa-solid fa-qrcode text-emerald-400 text-sm"></i>
+                            <span><strong>Instant Ticket Delivery:</strong> Once payment is confirmed, your official STEMA QR pass will be issued immediately for instant download.</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Submit Button -->
                 <div>
-                    <button type="submit" id="submit-btn" class="btn-gleam w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-black text-lg py-4 rounded-2xl shadow-xl shadow-emerald-500/25 hover:scale-[1.01] active:scale-[0.99] transition flex items-center justify-center gap-3">
-                        <i class="fa-solid fa-credit-card"></i>
-                        <span>PAY WITH PAYSTACK & GET TICKET INSTANTLY</span>
+                    <button type="submit" id="submit-btn" class="btn-gleam w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-lg py-4 rounded-2xl shadow-xl shadow-emerald-500/25 hover:scale-[1.01] active:scale-[0.99] transition flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-mobile-screen-button"></i>
+                        <span>PAY WITH INTASEND (M-PESA / CARD)</span>
                     </button>
                     <p class="text-center text-xs text-slate-400 mt-3 flex items-center justify-center gap-2">
                         <i class="fa-solid fa-shield-halved text-emerald-400"></i>
-                        <span>Live Paystack authorization • Zero registration mix-ups • Automated PDF ticket pass</span>
+                        <span>IntaSend M-Pesa STK Push &amp; Card • Zero registration mix-ups • Automated ticket pass</span>
                     </p>
                 </div>
 
@@ -627,7 +636,7 @@
 
         <div>
             <span class="bg-emerald-500/20 text-emerald-400 text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-emerald-500/30">
-                Payment Verified via Paystack
+                Payment Verified via IntaSend
             </span>
             <h3 class="font-display font-black text-2xl text-white mt-2">Your STEMA Ticket is Ready!</h3>
             <p class="text-xs text-slate-400 mt-1">
@@ -654,14 +663,14 @@
                 <span id="modal-amount" class="font-bold text-white">--</span>
             </div>
             <div class="flex justify-between items-center text-[11px] text-slate-500 pt-1">
-                <span>Paystack Ref:</span>
-                <span id="modal-paystack-ref" class="font-mono text-emerald-400">--</span>
+                <span>IntaSend Ref:</span>
+                <span id="modal-intasend-ref" class="font-mono text-emerald-400">--</span>
             </div>
         </div>
 
         <!-- Actions: Instant Download & View -->
         <div class="space-y-2.5">
-            <a id="modal-download-ticket-btn" href="#" class="btn-gleam block w-full bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-black py-3.5 rounded-xl text-sm transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2">
+            <a id="modal-download-ticket-btn" href="#" class="btn-gleam block w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3.5 rounded-xl text-sm transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2">
                 <i class="fa-solid fa-file-arrow-down text-base"></i>
                 <span>DOWNLOAD TICKET (PDF PASS)</span>
             </a>
@@ -679,24 +688,24 @@
     </div>
 </div>
 
-<!-- Test Paystack Simulation Modal (fallback if testing without live network) -->
-<div id="paystack-sim-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+<!-- IntaSend Setup / Test Modal (fallback active while awaiting verification / sandbox setup) -->
+<div id="intasend-sim-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl">
         <div class="flex items-center justify-center gap-2 text-emerald-400 font-bold text-sm">
             <i class="fa-solid fa-shield-halved"></i>
-            <span>Paystack Checkout</span>
+            <span>IntaSend M-Pesa Checkout</span>
         </div>
         <p class="text-xs text-slate-300">
-            Confirming Paystack payment of <strong class="text-emerald-400" id="sim-amount">KSh 700</strong> via M-Pesa / Card for ticket <span class="font-mono text-white" id="sim-ticket">--</span>.
+            Confirming registration payment of <strong class="text-emerald-400" id="sim-amount">KSh 700</strong> via IntaSend M-Pesa / Card for ticket <span class="font-mono text-white" id="sim-ticket">--</span>.
         </p>
         <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs text-left text-slate-400 space-y-1">
-            <div><strong>Payment Channel:</strong> M-Pesa Express (Kenya)</div>
+            <div><strong>Payment Channel:</strong> M-Pesa STK Push / Card</div>
             <div><strong>Currency:</strong> KES (Kenyan Shillings)</div>
-            <div><strong>Status:</strong> Ready for authorization</div>
+            <div><strong>Gateway:</strong> IntaSend Payments</div>
         </div>
         <div class="space-y-2">
-            <button id="sim-confirm-btn" onclick="confirmSimulatedPayment()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-xl text-sm transition">
-                <i class="fa-solid fa-check-circle mr-1"></i> Authorize & Complete Payment
+            <button id="sim-confirm-btn" onclick="confirmSimulatedPayment()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-xl text-sm transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-check-circle"></i> Complete Payment & Get Ticket
             </button>
             <button onclick="closeSimModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold py-2 rounded-xl text-xs transition">
                 Cancel
@@ -745,6 +754,46 @@
     </div>
 </section>
 
+
+<!-- ===== PHOTO GALLERY SECTION ===== -->
+<section id="gallery" class="py-16 bg-slate-950 border-t border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-2xl mx-auto mb-12">
+            <span class="text-xs font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-4 py-1.5 rounded-full border border-emerald-500/30">The Route &amp; Scenery</span>
+            <h2 class="font-display font-black text-3xl sm:text-4xl text-white mt-3">Browse Our Photo Gallery</h2>
+            <p class="text-slate-400 text-sm mt-2">A glimpse of the stunning Kikuyu to KEFRI circuit — forests, trails, and community in action.</p>
+        </div>
+
+        <!-- Gallery Grid — loaded dynamically from /api/gallery/photos -->
+        <div id="gallery-loading" class="text-center py-12">
+            <i class="fa-solid fa-spinner fa-spin text-emerald-400 text-3xl"></i>
+            <p class="text-slate-400 text-sm mt-3">Loading photos...</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="gallery-grid" style="display:none"></div>
+        <div id="gallery-empty" class="hidden text-center py-12">
+            <i class="fa-solid fa-images text-slate-700 text-4xl mb-3"></i>
+            <p class="text-slate-500 text-sm">No photos yet. Upload some from the Admin panel!</p>
+        </div>
+
+        <div class="text-center mt-8" id="gallery-count-bar"></div>
+    </div>
+</section>
+
+<!-- Lightbox Modal -->
+<div id="lightbox" class="fixed inset-0 z-[60] bg-black/95 backdrop-blur-md hidden flex items-center justify-center p-4" onclick="closeLightbox()">
+    <button onclick="prevPhoto(event)" class="absolute left-4 top-1/2 -translate-y-1/2 bg-slate-800/80 hover:bg-emerald-500 text-white hover:text-slate-950 w-12 h-12 rounded-full flex items-center justify-center transition text-lg z-10">
+        <i class="fa-solid fa-chevron-left"></i>
+    </button>
+    <img id="lightbox-img" src="" alt="" class="max-w-full max-h-[85vh] rounded-2xl object-contain shadow-2xl" onclick="event.stopPropagation()">
+    <button onclick="nextPhoto(event)" class="absolute right-4 top-1/2 -translate-y-1/2 bg-slate-800/80 hover:bg-emerald-500 text-white hover:text-slate-950 w-12 h-12 rounded-full flex items-center justify-center transition text-lg z-10">
+        <i class="fa-solid fa-chevron-right"></i>
+    </button>
+    <button onclick="closeLightbox()" class="absolute top-4 right-4 bg-slate-800/80 hover:bg-rose-500 text-white w-10 h-10 rounded-full flex items-center justify-center transition">
+        <i class="fa-solid fa-xmark"></i>
+    </button>
+    <div id="lightbox-counter" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-900/80 px-4 py-1.5 rounded-full text-xs text-slate-300 font-semibold"></div>
+</div>
+
 <!-- Event Venue & Safety FAQ Section -->
 <section id="about" class="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="text-center max-w-2xl mx-auto mb-12">
@@ -791,7 +840,9 @@
 
 {% block scripts %}
 <script>
-    window.PAYSTACK_PUBLIC_KEY = "{{ paystack_pub_key }}";
+    window.INTASEND_PUBLIC_KEY = "{{ intasend_pub_key }}";
+    window.INTASEND_LIVE = {{ 'true' if is_live else 'false' }};
+    window.INTASEND_HAS_KEYS = {{ 'true' if has_keys else 'false' }};
 </script>
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 {% endblock %}

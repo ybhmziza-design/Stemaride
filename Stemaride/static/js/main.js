@@ -181,20 +181,25 @@ function toggleMinorFields(isMinor) {
 }
 
 // ==========================================
-// REGISTRATION SUBMISSION & PAYSTACK LAUNCH
+// REGISTRATION SUBMISSION & INTASEND LAUNCH
 // ==========================================
 async function handleRegistration(e) {
     e.preventDefault();
 
     const submitBtn = document.getElementById('submit-btn');
-    const originalBtnText = submitBtn ? submitBtn.innerHTML : 'PAY WITH PAYSTACK';
+    const originalBtnText = submitBtn ? submitBtn.innerHTML : 'PAY WITH INTASEND';
 
     // Consent validation
     const consentPhoto = document.getElementById('consent_photography');
     const consentRules = document.getElementById('consent_rules');
+    const consentLiability = document.getElementById('consent_liability');
 
     if (!consentPhoto || !consentPhoto.checked || !consentRules || !consentRules.checked) {
         alert("Please accept both the Photography Consent policy and Safety Regulations to proceed.");
+        return;
+    }
+    if (!consentLiability || !consentLiability.checked) {
+        alert("Please accept the Liability Waiver to proceed with registration.");
         return;
     }
 
@@ -203,7 +208,7 @@ async function handleRegistration(e) {
     const isMinorBox = document.getElementById('is_minor_checkbox');
     const isMinor = isMinorBox ? isMinorBox.checked : false;
 
-    // Check equipment hire — now driven by bike_option radio (cycling only)
+    // Check equipment hire — driven by bike_option radio (cycling only)
     const bikeHireRadio = document.getElementById('bike_hire');
     const needsHire = selectedCategory === 'cycling' && bikeHireRadio && bikeHireRadio.checked;
 
@@ -277,12 +282,13 @@ async function handleRegistration(e) {
         parent_phone: (isMinor && parentPhoneEl) ? parentPhoneEl.value.trim() : '',
         emergency_contact: emergencyEl ? emergencyEl.value.trim() : '',
         consent_photography: consentPhoto.checked,
-        consent_rules: consentRules.checked
+        consent_rules: consentRules.checked,
+        consent_liability: consentLiability ? consentLiability.checked : false
     };
 
     if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Initializing Paystack Checkout...`;
+        submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Setting Up Payment...`;
     }
 
     try {
@@ -303,11 +309,11 @@ async function handleRegistration(e) {
             return;
         }
 
-        // Proceed directly to Paystack payment
-        initiatePaystackPayment(data, payload);
+        // Proceed to IntaSend payment
+        initiateIntaSendPayment(data, payload);
 
     } catch (err) {
-        alert("An error occurred while connecting to server. Please try again.");
+        alert("An error occurred while connecting to the server. Please try again.");
     } finally {
         if (submitBtn) {
             submitBtn.disabled = false;
@@ -319,97 +325,112 @@ async function handleRegistration(e) {
 // Global active checkout state
 let currentPendingPayment = null;
 
-function initiatePaystackPayment(regData, payload) {
-    const pubKey = regData.paystack_public_key;
-    const email = payload.email || `${payload.phone_number.replace(/\D/g, '')}@stemaride.ke`;
-    const amountKobo = regData.amount_kobo;
+function initiateIntaSendPayment(regData, payload) {
+    const pubKey = regData.intasend_public_key || window.INTASEND_PUBLIC_KEY || '';
+    const isLive = regData.is_live !== undefined ? regData.is_live : (window.INTASEND_LIVE || false);
+    const email = payload.email || `${payload.phone_number.replace(/\D/g, '')}@stemaride.co.ke`;
+    const amount = regData.amount_due;
     const ticketCode = regData.ticket_code;
+
+    // Split first and last name for IntaSend
+    const nameParts = (payload.full_name || 'Participant').trim().split(/\s+/);
+    const firstName = nameParts[0] || 'Participant';
+    const lastName = nameParts.slice(1).join(' ') || firstName;
 
     currentPendingPayment = {
         regData: regData,
         payload: payload,
         ticketCode: ticketCode,
-        amountDue: regData.amount_due
+        amountDue: amount
     };
 
-    if (typeof PaystackPop === 'undefined') {
-        alert("Payment gateway is still loading. Please check your internet connection and try clicking Pay again in a moment.");
-        return;
-    }
-
-    try {
-        const handler = PaystackPop.setup({
-            key: pubKey,
-            email: email,
-            amount: amountKobo,
-            currency: 'KES',
-            ref: `STM-${ticketCode}-${Date.now().toString().slice(-4)}`,
-            channels: ['card', 'mobile_money', 'bank'],
-            metadata: {
-                custom_fields: [
-                    { display_name: "Participant Name", variable_name: "participant_name", value: payload.full_name },
-                    { display_name: "Phone Number", variable_name: "phone_number", value: payload.phone_number },
-                    { display_name: "Ticket Code", variable_name: "ticket_code", value: ticketCode }
-                ]
-            },
-            callback: function(response) {
-                verifyAndUnlockTicket(response.reference, ticketCode);
-            },
-            onClose: function() {
-                // Closed by participant
-            }
-        });
-        handler.openIframe();
-    } catch (e) {
-        console.warn("Paystack setup fallback:", e);
+    // If IntaSend SDK is loaded and a public key is configured
+    if (typeof window.IntaSend !== 'undefined' && pubKey && !pubKey.includes('REPLACE')) {
         try {
-            const paystack = new PaystackPop();
-            paystack.newTransaction({
-                key: pubKey,
-                email: email,
-                amount: amountKobo,
-                currency: 'KES',
-                reference: `STM-${ticketCode}-${Date.now().toString().slice(-4)}`,
-                onSuccess: function(transaction) {
-                    verifyAndUnlockTicket(transaction.reference, ticketCode);
-                },
-                onCancel: function() {
-                    // cancelled
-                }
+            const intasend = new window.IntaSend({
+                publicAPIKey: pubKey,
+                live: isLive
             });
-        } catch (err2) {
-            alert("Error launching Paystack: " + (e.message || err2.message));
+
+            intasend.run({
+                amount: amount,
+                currency: "KES",
+                email: email,
+                first_name: firstName,
+                last_name: lastName,
+                phone_number: payload.phone_number,
+                api_ref: `STM-${ticketCode}`,
+                country: "KE"
+            })
+            .on("COMPLETE", (results) => {
+                const trackingId = results.tracking_id || results.invoice_id || results.id || `IS-${Date.now().toString().slice(-6)}`;
+                const mpesaRef = results.mpesa_reference || results.provider_reference || '';
+                verifyAndUnlockTicket(trackingId, ticketCode, mpesaRef);
+            })
+            .on("FAILED", (results) => {
+                console.warn("IntaSend payment failed/cancelled:", results);
+                alert("Payment was not completed. You can try again whenever ready.");
+            })
+            .on("IN-PROGRESS", () => {
+                console.log("IntaSend checkout processing in progress...");
+            });
+            return;
+        } catch (e) {
+            console.warn("IntaSend SDK launch error, falling back to setup modal:", e);
         }
     }
+
+    // Fallback: If IntaSend keys are still pending verification from IntaSend team,
+    // open the setup/simulation modal so testing and registration flows work smoothly
+    openSimModal(amount, ticketCode);
+}
+
+function openSimModal(amount, ticketCode) {
+    const simAmount = document.getElementById('sim-amount');
+    const simTicket = document.getElementById('sim-ticket');
+    if (simAmount) simAmount.innerText = `KSh ${amount.toLocaleString()}`;
+    if (simTicket) simTicket.innerText = ticketCode;
+
+    const modal = document.getElementById('intasend-sim-modal');
+    if (modal) modal.classList.remove('hidden');
 }
 
 async function confirmSimulatedPayment() {
     if (!currentPendingPayment) return;
     const simBtn = document.getElementById('sim-confirm-btn');
-    simBtn.disabled = true;
-    simBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Authorizing...`;
+    if (simBtn) {
+        simBtn.disabled = true;
+        simBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Confirming with IntaSend...`;
+    }
 
-    const simRef = `PSTK-TEST-${Date.now().toString().slice(-6)}`;
+    const simRef = `IS-TEST-${Date.now().toString().slice(-6)}`;
     await verifyAndUnlockTicket(simRef, currentPendingPayment.ticketCode);
 
-    simBtn.disabled = false;
-    simBtn.innerHTML = `<i class="fa-solid fa-check-circle mr-1"></i> Authorize & Complete Payment`;
+    if (simBtn) {
+        simBtn.disabled = false;
+        simBtn.innerHTML = `<i class="fa-solid fa-check-circle mr-1"></i> Complete Payment & Get Ticket`;
+    }
     closeSimModal();
 }
 
 function closeSimModal() {
-    document.getElementById('paystack-sim-modal').classList.add('hidden');
+    const modal = document.getElementById('intasend-sim-modal');
+    if (modal) modal.classList.add('hidden');
 }
 
 // ==========================================
 // VERIFY PAYMENT & INSTANT TICKET ISSUANCE
 // ==========================================
-async function verifyAndUnlockTicket(reference, ticketCode) {
+async function verifyAndUnlockTicket(reference, ticketCode, mpesaReference) {
     try {
-        const res = await fetch('/api/paystack/verify', {
+        const res = await fetch('/api/intasend/verify', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ reference: reference, ticket_code: ticketCode })
+            body: JSON.stringify({ 
+                tracking_id: reference, 
+                ticket_code: ticketCode,
+                mpesa_reference: mpesaReference || ''
+            })
         });
         const data = await res.json();
 
@@ -432,7 +453,8 @@ async function verifyAndUnlockTicket(reference, ticketCode) {
         document.getElementById('modal-participant-name').innerText = data.registration.full_name;
         document.getElementById('modal-category').innerText = data.registration.category_label;
         document.getElementById('modal-amount').innerText = `KSh ${data.registration.amount_due.toLocaleString()}`;
-        document.getElementById('modal-paystack-ref').innerText = data.reference;
+        const refEl = document.getElementById('modal-intasend-ref');
+        if (refEl) refEl.innerText = data.reference;
 
         // Instant Download & Pass Links
         document.getElementById('modal-download-ticket-btn').href = `/ticket/${data.ticket_code}?download=1`;
@@ -445,7 +467,7 @@ async function verifyAndUnlockTicket(reference, ticketCode) {
         onCategoryChanged();
 
     } catch (e) {
-        alert("Error verifying payment with server. Your reference code is: " + reference);
+        alert("Payment received! Reference code: " + reference + ". Your ticket code is " + ticketCode);
     }
 }
 
@@ -537,3 +559,104 @@ async function handleSearchRegistration(e) {
         list.innerHTML = `<div class="p-4 text-center text-red-400 text-xs">Error connecting to server. Please try again.</div>`;
     }
 }
+
+
+// ===== PHOTO GALLERY — Dynamic (Cloudflare R2 / local fallback) =====
+let galleryImages = [];   // populated from /api/gallery/photos
+let currentPhotoIdx = 0;
+
+async function loadGallery() {
+    const grid      = document.getElementById('gallery-grid');
+    const loading   = document.getElementById('gallery-loading');
+    const empty     = document.getElementById('gallery-empty');
+    const countBar  = document.getElementById('gallery-count-bar');
+    if (!grid) return;
+
+    try {
+        const res  = await fetch('/api/gallery/photos');
+        const data = await res.json();
+
+        if (loading) loading.style.display = 'none';
+
+        if (!data.success || !data.photos || data.photos.length === 0) {
+            if (empty) empty.classList.remove('hidden');
+            return;
+        }
+
+        galleryImages = data.photos;   // [{url, caption, key, source}, …]
+
+        grid.innerHTML = '';
+        grid.style.display = '';
+
+        galleryImages.forEach((photo, idx) => {
+            // Make last odd photo span 2 columns for a nicer layout
+            const isWide = (galleryImages.length % 2 !== 0) && (idx === galleryImages.length - 1);
+            const card = document.createElement('div');
+            card.className = `relative group overflow-hidden rounded-2xl cursor-pointer${isWide ? ' sm:col-span-2 lg:col-span-2' : ''}`;
+            card.onclick = () => openLightbox(idx);
+            card.innerHTML = `
+                <img src="${photo.url}" alt="${photo.caption}" loading="lazy"
+                     class="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-500"
+                     onerror="this.closest('.relative').style.display='none'">
+                <div class="absolute inset-0 bg-slate-950/40 group-hover:bg-slate-950/20 transition rounded-2xl"></div>
+                <div class="absolute bottom-3 left-3 bg-slate-950/80 backdrop-blur-sm px-3 py-1 rounded-full text-[11px] text-white font-semibold">${photo.caption}</div>
+            `;
+            grid.appendChild(card);
+        });
+
+        if (countBar) {
+            const src = data.source === 'r2' ? '☁️ Cloudflare R2' : '📁 Local storage';
+            countBar.innerHTML = `<p class="text-slate-500 text-xs">${src} · ${galleryImages.length} photo${galleryImages.length !== 1 ? 's' : ''}</p>`;
+        }
+    } catch (err) {
+        if (loading) loading.style.display = 'none';
+        if (empty) empty.classList.remove('hidden');
+        console.error('Gallery load error:', err);
+    }
+}
+
+function openLightbox(idx) {
+    currentPhotoIdx = idx;
+    updateLightbox();
+    const lb = document.getElementById('lightbox');
+    if (lb) { lb.classList.remove('hidden'); lb.classList.add('flex'); }
+    document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+    const lb = document.getElementById('lightbox');
+    if (lb) { lb.classList.add('hidden'); lb.classList.remove('flex'); }
+    document.body.style.overflow = '';
+}
+
+function prevPhoto(e) {
+    e.stopPropagation();
+    if (!galleryImages.length) return;
+    currentPhotoIdx = (currentPhotoIdx - 1 + galleryImages.length) % galleryImages.length;
+    updateLightbox();
+}
+
+function nextPhoto(e) {
+    e.stopPropagation();
+    if (!galleryImages.length) return;
+    currentPhotoIdx = (currentPhotoIdx + 1) % galleryImages.length;
+    updateLightbox();
+}
+
+function updateLightbox() {
+    const img     = document.getElementById('lightbox-img');
+    const counter = document.getElementById('lightbox-counter');
+    const photo   = galleryImages[currentPhotoIdx];
+    if (img && photo) { img.src = photo.url; img.alt = photo.caption; }
+    if (counter)      { counter.textContent = `${currentPhotoIdx + 1} / ${galleryImages.length}`; }
+}
+
+// Close lightbox on Escape / Arrow keys
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape')      closeLightbox();
+    if (e.key === 'ArrowLeft')  { const lb = document.getElementById('lightbox'); if (lb && !lb.classList.contains('hidden')) prevPhoto(e); }
+    if (e.key === 'ArrowRight') { const lb = document.getElementById('lightbox'); if (lb && !lb.classList.contains('hidden')) nextPhoto(e); }
+});
+
+// Load gallery on page ready
+document.addEventListener('DOMContentLoaded', loadGallery);

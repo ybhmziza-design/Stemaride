@@ -155,10 +155,11 @@ async function refreshStats() {
     } catch (e) {}
 }
 
-async function savePaystackKeys(e) {
+async function saveIntaSendKeys(e) {
     e.preventDefault();
     const pubKey = document.getElementById('cfg-pub-key').value.trim();
     const secKey = document.getElementById('cfg-sec-key').value.trim();
+    const isLive = document.getElementById('cfg-is-live').checked;
     const btn = document.getElementById('save-keys-btn');
     const originalText = btn.innerHTML;
 
@@ -166,20 +167,20 @@ async function savePaystackKeys(e) {
     btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Saving...`;
 
     try {
-        const res = await fetch('/api/admin/save-paystack-keys', {
+        const res = await fetch('/api/admin/save-intasend-keys', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ public_key: pubKey, secret_key: secKey })
+            body: JSON.stringify({ public_key: pubKey, secret_key: secKey, is_live: isLive })
         });
         const data = await res.json();
         if (data.success) {
-            alert("Paystack keys saved successfully! Changes are active.");
+            alert("IntaSend configuration saved successfully! Changes are active.");
             window.location.reload();
         } else {
             alert("Failed to save keys: " + (data.error || "Unknown error"));
         }
     } catch (err) {
-        alert("Error saving Paystack configuration.");
+        alert("Error saving IntaSend configuration.");
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
@@ -209,3 +210,162 @@ async function confirmClearAll() {
         alert("Server error occurred while clearing records.");
     }
 }
+
+// ==========================================
+// CLOUDFLARE R2 GALLERY MANAGEMENT
+// ==========================================
+
+async function checkR2Status() {
+    const badge = document.getElementById('r2-status-badge');
+    if (!badge) return;
+    try {
+        const res = await fetch('/api/gallery/r2-status');
+        const data = await res.json();
+        if (data.connected) {
+            badge.className = "text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2.5 py-1 rounded-full font-bold";
+            badge.innerHTML = "🟢 R2 Connected (" + (data.bucket || 'Bucket Ready') + ")";
+        } else if (!data.boto3_installed) {
+            badge.className = "text-xs bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2.5 py-1 rounded-full font-bold";
+            badge.innerHTML = "⚠️ Install boto3 on Server";
+        } else if (data.has_credentials) {
+            badge.className = "text-xs bg-sky-500/20 text-sky-400 border border-sky-500/40 px-2.5 py-1 rounded-full font-bold";
+            badge.innerHTML = "🟡 R2 Configured (Connecting...)";
+        } else {
+            badge.className = "text-xs bg-slate-800 text-slate-400 border border-slate-700 px-2.5 py-1 rounded-full font-bold";
+            badge.innerHTML = "⚪ Local Storage Mode";
+        }
+    } catch (e) {
+        badge.className = "text-xs bg-rose-500/20 text-rose-400 border border-rose-500/40 px-2.5 py-1 rounded-full font-bold";
+        badge.innerHTML = "🔴 Status Check Failed";
+    }
+}
+
+async function loadAdminGallery() {
+    const grid = document.getElementById('admin-gallery-grid');
+    if (!grid) return;
+    grid.innerHTML = `
+        <div class="col-span-full text-center py-6 text-slate-500 text-xs">
+            <i class="fa-solid fa-spinner fa-spin mr-1"></i> Refreshing photos...
+        </div>
+    `;
+
+    try {
+        const res = await fetch('/api/gallery/photos');
+        const data = await res.json();
+
+        if (!data.success || !data.photos || data.photos.length === 0) {
+            grid.innerHTML = `
+                <div class="col-span-full text-center py-8 text-slate-500 text-xs">
+                    <i class="fa-solid fa-images text-2xl mb-2 block text-slate-600"></i>
+                    No photos found. Drop images above to add to the gallery!
+                </div>
+            `;
+            return;
+        }
+
+        grid.innerHTML = '';
+        data.photos.forEach(photo => {
+            const card = document.createElement('div');
+            card.className = "relative group bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow";
+            card.innerHTML = `
+                <img src="${photo.url}" alt="${photo.caption}" class="w-full h-28 object-cover group-hover:scale-105 transition-transform duration-300">
+                <div class="p-2">
+                    <p class="text-[11px] font-semibold text-slate-200 truncate" title="${photo.caption}">${photo.caption}</p>
+                    <div class="flex items-center justify-between mt-1 text-[10px] text-slate-500">
+                        <span>${photo.source === 'r2' ? 'R2 Cloud' : 'Local'}</span>
+                        ${photo.source === 'r2' ? `
+                            <button onclick="deleteGalleryPhoto('${photo.key}')" class="text-rose-400 hover:text-rose-300 transition" title="Delete Photo">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    } catch (e) {
+        grid.innerHTML = `
+            <div class="col-span-full text-center py-6 text-rose-400 text-xs">
+                Failed to load gallery photos.
+            </div>
+        `;
+    }
+}
+
+function handleGalleryDrop(e) {
+    e.preventDefault();
+    const dropZone = document.getElementById('gallery-drop-zone');
+    if (dropZone) dropZone.classList.remove('border-purple-400');
+    if (e.dataTransfer && e.dataTransfer.files) {
+        uploadGalleryPhotos(e.dataTransfer.files);
+    }
+}
+
+async function uploadGalleryPhotos(files) {
+    if (!files || files.length === 0) return;
+
+    const progressBox = document.getElementById('gallery-upload-progress');
+    const progressBar = document.getElementById('gallery-upload-bar');
+    const progressMsg = document.getElementById('gallery-upload-msg');
+
+    if (progressBox) progressBox.classList.remove('hidden');
+    if (progressBar) progressBar.style.width = '30%';
+    if (progressMsg) progressMsg.textContent = `Uploading ${files.length} photo(s) to Cloudflare R2...`;
+
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+        formData.append('photos', files[i]);
+    }
+
+    try {
+        if (progressBar) progressBar.style.width = '70%';
+        const res = await fetch('/api/gallery/upload', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await res.json();
+
+        if (progressBar) progressBar.style.width = '100%';
+
+        if (data.success) {
+            if (progressMsg) progressMsg.textContent = data.message || "Upload complete!";
+            setTimeout(() => {
+                if (progressBox) progressBox.classList.add('hidden');
+                if (progressBar) progressBar.style.width = '0%';
+            }, 2000);
+            loadAdminGallery();
+        } else {
+            alert("Upload failed: " + (data.error || "Unknown error occurred. Ensure boto3 is installed."));
+            if (progressBox) progressBox.classList.add('hidden');
+        }
+    } catch (err) {
+        alert("Upload error: Could not reach the server.");
+        if (progressBox) progressBox.classList.add('hidden');
+    }
+}
+
+async function deleteGalleryPhoto(key) {
+    if (!confirm("Are you sure you want to delete this photo from Cloudflare R2?")) return;
+
+    try {
+        const res = await fetch('/api/gallery/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key })
+        });
+        const data = await res.json();
+        if (data.success) {
+            loadAdminGallery();
+        } else {
+            alert("Error: " + (data.error || "Failed to delete photo."));
+        }
+    } catch (e) {
+        alert("Server error occurred while deleting photo.");
+    }
+}
+
+// Initialize gallery on admin page load
+document.addEventListener('DOMContentLoaded', () => {
+    checkR2Status();
+    loadAdminGallery();
+});

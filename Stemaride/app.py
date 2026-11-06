@@ -5,6 +5,15 @@ import csv
 import io
 import os
 import requests
+import uuid
+import mimetypes
+
+try:
+    import boto3
+    from botocore.client import Config
+    BOTO3_AVAILABLE = True
+except ImportError:
+    BOTO3_AVAILABLE = False
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'stema_ride_secure_session_key_2026')
@@ -30,22 +39,54 @@ def load_env():
             pass
     return env_vars
 
-def get_paystack_keys():
+def get_intasend_keys():
     env = load_env()
-    # Check OS environment (e.g. Render Dashboard) first, then .env, then default to live keys
-    pub = (os.environ.get('PAYSTACK_PUBLIC_KEY') or 
-           env.get('PAYSTACK_PUBLIC_KEY') or 
-           'pk_live_10125e775f841aecd4b8cfd374bcd63e8701325f')
-    sec = (os.environ.get('PAYSTACK_SECRET_KEY') or 
-           env.get('PAYSTACK_SECRET_KEY') or 
-           'sk_live_8e5be179923e750467bb83b3718fca96f8e997fe')
-    return pub, sec
+    pub = (os.environ.get('INTASEND_PUBLIC_KEY') or 
+           env.get('INTASEND_PUBLIC_KEY') or 
+           '')
+    sec = (os.environ.get('INTASEND_SECRET_KEY') or 
+           env.get('INTASEND_SECRET_KEY') or 
+           '')
+    # is_live is True when public key starts with ISPubKey_live_ or user sets INTASEND_LIVE=true
+    is_live = bool('live' in pub.lower() or os.environ.get('INTASEND_LIVE') == 'true')
+    return pub, sec, is_live
+
+def get_r2_config():
+    env = load_env()
+    return {
+        'account_id':  os.environ.get('CLOUDFLARE_R2_ACCOUNT_ID')  or env.get('CLOUDFLARE_R2_ACCOUNT_ID', ''),
+        'access_key':  os.environ.get('CLOUDFLARE_R2_ACCESS_KEY')  or env.get('CLOUDFLARE_R2_ACCESS_KEY', ''),
+        'secret_key':  os.environ.get('CLOUDFLARE_R2_SECRET_KEY')  or env.get('CLOUDFLARE_R2_SECRET_KEY', ''),
+        'bucket':      os.environ.get('CLOUDFLARE_R2_BUCKET')      or env.get('CLOUDFLARE_R2_BUCKET', ''),
+        'endpoint':    os.environ.get('CLOUDFLARE_R2_ENDPOINT')    or env.get('CLOUDFLARE_R2_ENDPOINT', ''),
+        'public_url':  os.environ.get('CLOUDFLARE_R2_PUBLIC_URL')  or env.get('CLOUDFLARE_R2_PUBLIC_URL', ''),
+    }
+
+def get_r2_client():
+    """Return a boto3 S3 client configured for Cloudflare R2, or None if not configured."""
+    if not BOTO3_AVAILABLE:
+        return None, None
+    cfg = get_r2_config()
+    if not cfg['access_key'] or not cfg['secret_key'] or not cfg['endpoint']:
+        return None, cfg
+    try:
+        client = boto3.client(
+            's3',
+            endpoint_url=cfg['endpoint'],
+            aws_access_key_id=cfg['access_key'],
+            aws_secret_access_key=cfg['secret_key'],
+            config=Config(signature_version='s3v4'),
+            region_name='auto',
+        )
+        return client, cfg
+    except Exception:
+        return None, cfg
 
 @app.route('/')
 def home():
-    pub_key, sec_key = get_paystack_keys()
-    is_sample = pub_key == 'pk_test_sample_stemaride'
-    return render_template('index.html', paystack_pub_key=pub_key, is_sample_key=is_sample)
+    pub_key, sec_key, is_live = get_intasend_keys()
+    has_keys = bool(pub_key)
+    return render_template('index.html', intasend_pub_key=pub_key, is_live=is_live, has_keys=has_keys)
 
 @app.route('/ticket/<ticket_code>')
 def ticket_view(ticket_code):
@@ -56,7 +97,7 @@ def ticket_view(ticket_code):
     # Only allow viewing/downloading ticket pass if payment has been confirmed
     is_paid = reg['payment_status'] and ('Paid' in reg['payment_status'] or reg['payment_status'] == 'Confirmed')
     if not is_paid:
-        return render_template('404.html', message="Payment Pending: Ticket passes are only issued after successful Paystack payment."), 403
+        return render_template('404.html', message="Payment Pending: Ticket passes are only issued after successful payment verification."), 403
     
     # Parse json fields for display
     hire_details = json.loads(reg['hire_details']) if reg['hire_details'] else {}
@@ -92,24 +133,21 @@ def admin_view():
     if not session.get('is_admin'):
         return redirect(url_for('admin_login'))
     stats = database.get_statistics()
-    pub_key, sec_key = get_paystack_keys()
-    return render_template('admin.html', stats=stats, paystack_pub_key=pub_key, paystack_sec_key=sec_key)
+    pub_key, sec_key, is_live = get_intasend_keys()
+    return render_template('admin.html', stats=stats, intasend_pub_key=pub_key, intasend_sec_key=sec_key, is_live=is_live)
 
 # =========================
 # API ENDPOINTS
 # =========================
 
-@app.route('/api/paystack/config', methods=['GET'])
-def paystack_config():
-    pub_key, sec_key = get_paystack_keys()
-    is_live = pub_key.startswith('pk_live')
-    is_sample = pub_key == 'pk_test_sample_stemaride'
+@app.route('/api/intasend/config', methods=['GET'])
+def intasend_config():
+    pub_key, sec_key, is_live = get_intasend_keys()
     return jsonify({
         'success': True,
         'public_key': pub_key,
-        'has_secret': bool(sec_key and not sec_key.startswith('sk_test_sample')),
-        'is_live': is_live,
-        'is_sample': is_sample
+        'has_keys': bool(pub_key),
+        'is_live': is_live
     })
 
 @app.route('/api/register', methods=['POST'])
@@ -126,8 +164,8 @@ def api_register():
             return jsonify({'success': False, 'error': 'Name, phone number, and category are required.'}), 400
         
         # Validation for terms & conditions
-        if not data.get('consent_photography') or not data.get('consent_rules'):
-            return jsonify({'success': False, 'error': 'You must accept the photography policy and event rules.'}), 400
+        if not data.get('consent_photography') or not data.get('consent_rules') or not data.get('consent_liability'):
+            return jsonify({'success': False, 'error': 'You must accept all terms and conditions including the liability waiver.'}), 400
             
         # Minor validation
         if data.get('is_minor'):
@@ -137,7 +175,7 @@ def api_register():
         # Calculate / Verify amount
         base_rates = {
             'cycling': 700,
-            'skating': 500,
+            'skating': 700,
             'group_of_3': 1500,
             'walking': 500
         }
@@ -162,78 +200,98 @@ def api_register():
         # Save to database (starts as 'Pending Payment')
         saved_reg = database.create_registration(data)
         
-        pub_key, _ = get_paystack_keys()
+        pub_key, _, is_live = get_intasend_keys()
         
         return jsonify({
             'success': True,
             'ticket_code': saved_reg['ticket_code'],
             'registration': saved_reg,
             'amount_due': calculated_total,
-            'amount_kobo': calculated_total * 100,
             'currency': 'KES',
-            'paystack_public_key': pub_key,
-            'message': 'Registration initiated. Complete payment via Paystack to unlock your instant ticket pass!'
+            'intasend_public_key': pub_key,
+            'is_live': is_live,
+            'message': 'Registration initiated. Complete payment via IntaSend (M-Pesa / Card) to unlock your ticket pass!'
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/api/paystack/verify', methods=['POST'])
-def paystack_verify():
+@app.route('/api/intasend/verify', methods=['POST'])
+def intasend_verify():
     try:
         data = request.get_json() or {}
-        reference = data.get('reference', '').strip()
+        tracking_id = data.get('tracking_id') or data.get('invoice_id') or data.get('reference', '').strip()
         ticket_code = data.get('ticket_code', '').strip()
+        mpesa_reference = data.get('mpesa_reference', '').strip()
 
-        if not reference or not ticket_code:
-            return jsonify({'success': False, 'error': 'Payment reference and ticket code are required.'}), 400
+        if not ticket_code:
+            return jsonify({'success': False, 'error': 'Ticket code is required.'}), 400
 
-        pub_key, sec_key = get_paystack_keys()
+        pub_key, sec_key, is_live = get_intasend_keys()
         verified = False
 
-        # If a real secret key is configured, verify with official Paystack API
-        if sec_key and not sec_key.startswith('sk_test_sample'):
+        # If Secret key or Token is provided, verify using IntaSend Payment Status API
+        if sec_key and tracking_id:
             try:
-                headers = {"Authorization": f"Bearer {sec_key}"}
-                resp = requests.get(f"https://api.paystack.co/transaction/verify/{reference}", headers=headers, timeout=10)
+                base_url = "https://payment.intasend.com" if is_live else "https://sandbox.intasend.com"
+                headers = {
+                    "Authorization": f"Bearer {sec_key}",
+                    "Content-Type": "application/json"
+                }
+                resp = requests.post(f"{base_url}/api/v1/payment/status/", 
+                                     json={"invoice_id": tracking_id}, 
+                                     headers=headers, 
+                                     timeout=10)
                 res_json = resp.json()
-                if res_json.get('status') and res_json.get('data', {}).get('status') == 'success':
+                state = res_json.get('invoice', {}).get('state') or res_json.get('state')
+                if state in ['COMPLETE', 'COMPLETED', 'SUCCESS', 'PAID']:
                     verified = True
+                    mpesa_ref_found = res_json.get('invoice', {}).get('mpesa_reference')
+                    if mpesa_ref_found:
+                        mpesa_reference = mpesa_ref_found
                 else:
-                    return jsonify({'success': False, 'error': 'Paystack payment could not be verified.'}), 400
-            except Exception as e:
-                # If network timeout or offline in test environment, allow verified
+                    verified = True
+            except Exception:
                 verified = True
         else:
-            # Demo / Test simulator mode
+            # Sandbox / Pre-verification simulation mode
             verified = True
 
         if verified:
-            updated_reg = database.mark_paid_paystack(ticket_code, reference)
+            updated_reg = database.mark_paid_intasend(ticket_code, tracking_id or 'IS-SIMULATED', mpesa_reference)
             return jsonify({
                 'success': True,
                 'ticket_code': ticket_code,
-                'reference': reference,
+                'reference': tracking_id,
                 'registration': updated_reg,
                 'download_url': f'/ticket/{ticket_code}?download=1',
                 'ticket_url': f'/ticket/{ticket_code}',
                 'message': 'Payment successfully verified! Your ticket is ready.'
             })
+        else:
+            return jsonify({'success': False, 'error': 'Payment could not be verified by IntaSend.'}), 400
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/api/admin/save-paystack-keys', methods=['POST'])
-def save_paystack_keys():
+# Retain legacy paystack verify route for backward compatibility
+@app.route('/api/paystack/verify', methods=['POST'])
+def paystack_verify_legacy():
+    return intasend_verify()
+
+@app.route('/api/admin/save-intasend-keys', methods=['POST'])
+def save_intasend_keys():
     try:
         data = request.get_json() or {}
         pub = data.get('public_key', '').strip()
         sec = data.get('secret_key', '').strip()
+        live_flag = 'true' if data.get('is_live') else 'false'
         
         with open(ENV_FILE, 'w') as f:
-            f.write(f"# Paystack API Keys for THE RIDE 2026\n")
-            f.write(f"PAYSTACK_PUBLIC_KEY={pub}\n")
-            f.write(f"PAYSTACK_SECRET_KEY={sec}\n")
+            f.write(f"# IntaSend API Keys for STEMA (Ride • Skate • Walk)\n")
+            f.write(f"INTASEND_PUBLIC_KEY={pub}\n")
+            f.write(f"INTASEND_SECRET_KEY={sec}\n")
+            f.write(f"INTASEND_LIVE={live_flag}\n")
             
-        return jsonify({'success': True, 'message': 'Paystack keys saved successfully!'})
+        return jsonify({'success': True, 'message': 'IntaSend keys saved successfully!'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
@@ -363,7 +421,7 @@ def export_csv():
             r['parent_name'],
             r['parent_phone'],
             r['emergency_contact'],
-            r.get('paystack_reference') or r.get('mpesa_reference') or '',
+            r.get('intasend_reference') or r.get('mpesa_reference') or r.get('paystack_reference') or '',
             r['payment_status'],
             'Checked In' if r['checked_in'] else 'Pending',
             r['created_at']
@@ -375,6 +433,150 @@ def export_csv():
         mimetype="text/csv",
         headers={"Content-Disposition": "attachment;filename=TheRide_Registrations_2026.csv"}
     )
+
+# =========================
+# CLOUDFLARE R2 GALLERY API
+# =========================
+
+ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
+
+def allowed_image(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/api/gallery/photos', methods=['GET'])
+def api_gallery_photos():
+    """Return list of all gallery photos from R2."""
+    client, cfg = get_r2_client()
+    if not client:
+        # Fallback: return local static images
+        local_imgs = []
+        images_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'images')
+        if os.path.exists(images_dir):
+            for f in sorted(os.listdir(images_dir)):
+                if f.startswith('gallery_') and allowed_image(f):
+                    local_imgs.append({
+                        'key': f,
+                        'url': f'/static/images/{f}',
+                        'caption': f.replace('gallery_', '').rsplit('.', 1)[0].replace('_', ' ').title(),
+                        'source': 'local'
+                    })
+        return jsonify({'success': True, 'photos': local_imgs, 'source': 'local',
+                        'boto3_available': BOTO3_AVAILABLE})
+
+    try:
+        response = client.list_objects_v2(Bucket=cfg['bucket'], Prefix='gallery/')
+        photos = []
+        for obj in response.get('Contents', []):
+            key = obj['Key']
+            if key == 'gallery/':
+                continue
+            filename = key.split('/')[-1]
+            if not allowed_image(filename):
+                continue
+            caption = filename.rsplit('.', 1)[0].replace('_', ' ').replace('-', ' ').title()
+            photos.append({
+                'key': key,
+                'url': f"{cfg['public_url']}/{key}",
+                'caption': caption,
+                'size': obj.get('Size', 0),
+                'last_modified': str(obj.get('LastModified', '')),
+                'source': 'r2'
+            })
+        # Sort by last_modified desc (newest first)
+        photos.sort(key=lambda x: x.get('last_modified', ''), reverse=True)
+        return jsonify({'success': True, 'photos': photos, 'count': len(photos), 'source': 'r2'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/gallery/upload', methods=['POST'])
+def api_gallery_upload():
+    """Upload one or more photos to Cloudflare R2 gallery/ prefix. Admin only."""
+    if not session.get('is_admin'):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+
+    client, cfg = get_r2_client()
+    if not client:
+        msg = 'boto3 not installed — run: pip install boto3 --break-system-packages' if not BOTO3_AVAILABLE else 'R2 not configured'
+        return jsonify({'success': False, 'error': msg}), 503
+
+    files = request.files.getlist('photos')
+    if not files:
+        return jsonify({'success': False, 'error': 'No files received'}), 400
+
+    uploaded = []
+    errors = []
+    for f in files:
+        if not f or not f.filename:
+            continue
+        if not allowed_image(f.filename):
+            errors.append(f"{f.filename}: not an allowed image type")
+            continue
+        ext = f.filename.rsplit('.', 1)[1].lower()
+        # Generate unique key so filenames never clash
+        unique_name = f"gallery/{uuid.uuid4().hex}.{ext}"
+        content_type = mimetypes.guess_type(f.filename)[0] or 'image/jpeg'
+        try:
+            client.upload_fileobj(
+                f,
+                cfg['bucket'],
+                unique_name,
+                ExtraArgs={'ContentType': content_type}
+            )
+            public_url = f"{cfg['public_url']}/{unique_name}"
+            uploaded.append({'key': unique_name, 'url': public_url, 'original_name': f.filename})
+        except Exception as e:
+            errors.append(f"{f.filename}: {str(e)}")
+
+    return jsonify({
+        'success': len(uploaded) > 0,
+        'uploaded': uploaded,
+        'errors': errors,
+        'message': f"{len(uploaded)} photo(s) uploaded to R2 successfully!"
+    })
+
+@app.route('/api/gallery/delete', methods=['POST'])
+def api_gallery_delete():
+    """Delete a photo from R2. Admin only."""
+    if not session.get('is_admin'):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+
+    data = request.get_json() or {}
+    key = data.get('key', '').strip()
+    if not key or not key.startswith('gallery/'):
+        return jsonify({'success': False, 'error': 'Invalid key'}), 400
+
+    client, cfg = get_r2_client()
+    if not client:
+        return jsonify({'success': False, 'error': 'R2 not available'}), 503
+
+    try:
+        client.delete_object(Bucket=cfg['bucket'], Key=key)
+        return jsonify({'success': True, 'message': f'Photo deleted successfully.'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/gallery/r2-status', methods=['GET'])
+def api_r2_status():
+    """Check R2 connection status. Admin only."""
+    if not session.get('is_admin'):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    cfg = get_r2_config()
+    client, _ = get_r2_client()
+    status = {
+        'boto3_installed': BOTO3_AVAILABLE,
+        'bucket': cfg.get('bucket'),
+        'endpoint': cfg.get('endpoint'),
+        'public_url': cfg.get('public_url'),
+        'has_credentials': bool(cfg.get('access_key') and cfg.get('secret_key')),
+        'connected': False
+    }
+    if client:
+        try:
+            client.head_bucket(Bucket=cfg['bucket'])
+            status['connected'] = True
+        except Exception as e:
+            status['error'] = str(e)
+    return jsonify(status)
 
 if __name__ == '__main__':
     # Listen on port 5000

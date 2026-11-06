@@ -36,7 +36,6 @@ def init_db():
             consent_rules INTEGER DEFAULT 1,
             emergency_contact TEXT,
             mpesa_reference TEXT,
-            paystack_reference TEXT,
             payment_status TEXT DEFAULT 'Pending Payment',
             checked_in INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -44,9 +43,14 @@ def init_db():
     ''')
     conn.commit()
     
-    # Ensure column exists if table was already created
+    # Ensure columns exist if table was already created
     try:
-        cursor.execute("ALTER TABLE registrations ADD COLUMN paystack_reference TEXT")
+        cursor.execute("PRAGMA table_info(registrations)")
+        cols = [c[1] for c in cursor.fetchall()]
+        if 'intasend_reference' not in cols:
+            cursor.execute("ALTER TABLE registrations ADD COLUMN intasend_reference TEXT")
+        if 'paystack_reference' not in cols:
+            cursor.execute("ALTER TABLE registrations ADD COLUMN paystack_reference TEXT")
         conn.commit()
     except Exception:
         pass
@@ -128,10 +132,11 @@ def search_registration(query):
                OR UPPER(ticket_code) = UPPER(?)
                OR phone_number LIKE ? 
                OR phone_number LIKE ?
+               OR UPPER(intasend_reference) = UPPER(?)
                OR UPPER(paystack_reference) = UPPER(?)
                OR UPPER(mpesa_reference) = UPPER(?))
         ORDER BY id DESC
-    ''', (clean_query, clean_query, f"%{clean_query}%", f"%{phone_alt}%", clean_query, clean_query))
+    ''', (clean_query, clean_query, f"%{clean_query}%", f"%{phone_alt}%", clean_query, clean_query, clean_query))
     rows = cursor.fetchall()
     conn.close()
     return [dict(r) for r in rows]
@@ -182,6 +187,22 @@ def update_status(ticket_code, payment_status=None, checked_in=None):
                        (checked_in, ticket_code))
     conn.commit()
     conn.close()
+
+def mark_paid_intasend(ticket_code, reference, mpesa_code=None):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    ref = reference or ''
+    m_code = mpesa_code or ref
+    cursor.execute("""
+        UPDATE registrations 
+        SET payment_status = 'Paid (IntaSend)', intasend_reference = ?, mpesa_reference = COALESCE(NULLIF(?, ''), mpesa_reference, ?)
+        WHERE UPPER(ticket_code) = UPPER(?)
+    """, (ref, m_code, ref, ticket_code.strip()))
+    conn.commit()
+    cursor.execute("SELECT * FROM registrations WHERE UPPER(ticket_code) = UPPER(?)", (ticket_code.strip(),))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
 
 def mark_paid_paystack(ticket_code, reference):
     conn = get_db_connection()

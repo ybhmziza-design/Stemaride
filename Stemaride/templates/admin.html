@@ -73,45 +73,108 @@
 
     </div>
 
-    <!-- Paystack API Settings Card -->
+    <!-- IntaSend API Settings Card -->
     <div class="bg-slate-900 border border-emerald-500/30 rounded-2xl p-5 shadow-lg">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3 mb-4">
             <div class="flex items-center gap-2.5">
                 <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm">
-                    <i class="fa-solid fa-credit-card"></i>
+                    <i class="fa-solid fa-mobile-screen-button"></i>
                 </div>
                 <div>
-                    <h3 class="font-bold text-sm text-white">Paystack Payment Settings</h3>
-                    <p class="text-[11px] text-slate-400">Configure your Paystack Live or Test API keys for automated payments & instant ticket delivery.</p>
+                    <h3 class="font-bold text-sm text-white">IntaSend Payment Gateway Settings</h3>
+                    <p class="text-[11px] text-slate-400">Configure your IntaSend Publishable Key & Secret API Token for automated M-Pesa STK Push and instant ticket issuance.</p>
                 </div>
             </div>
             <div class="text-xs">
-                {% if paystack_pub_key.startswith('pk_live') %}
-                <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2.5 py-1 rounded-full font-bold">🟢 LIVE MODE ACTIVE</span>
-                {% elif paystack_pub_key.startswith('pk_test') and not paystack_pub_key.endswith('sample_stemaride') %}
-                <span class="bg-sky-500/20 text-sky-400 border border-sky-500/40 px-2.5 py-1 rounded-full font-bold">🟡 TEST MODE ACTIVE</span>
+                {% if intasend_pub_key and is_live %}
+                <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2.5 py-1 rounded-full font-bold">🟢 INTASEND LIVE ACTIVE</span>
+                {% elif intasend_pub_key %}
+                <span class="bg-sky-500/20 text-sky-400 border border-sky-500/40 px-2.5 py-1 rounded-full font-bold">🟡 TEST / SANDBOX MODE</span>
                 {% else %}
-                <span class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2.5 py-1 rounded-full font-bold">⚙️ DEMO / SIMULATION MODE</span>
+                <span class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2.5 py-1 rounded-full font-bold">⚙️ SETUP / PENDING VERIFICATION</span>
                 {% endif %}
             </div>
         </div>
 
-        <form onsubmit="savePaystackKeys(event)" class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
-            <div class="md:col-span-5">
-                <label class="block text-[11px] font-semibold text-slate-300 mb-1">Paystack Public Key (Starts with pk_test_ or pk_live_)</label>
-                <input type="text" id="cfg-pub-key" value="{{ paystack_pub_key }}" placeholder="pk_test_..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-400">
+        <form onsubmit="saveIntaSendKeys(event)" class="space-y-3">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                <div class="md:col-span-5">
+                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">IntaSend Publishable API Key (Starts with ISPubKey_...)</label>
+                    <input type="text" id="cfg-pub-key" value="{{ intasend_pub_key }}" placeholder="ISPubKey_test_... or ISPubKey_live_..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-400">
+                </div>
+                <div class="md:col-span-5">
+                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">IntaSend Secret Token / Key</label>
+                    <input type="password" id="cfg-sec-key" value="{{ intasend_sec_key }}" placeholder="ISSecretKey_... or API Token" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-400">
+                </div>
+                <div class="md:col-span-2">
+                    <button type="submit" id="save-keys-btn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Save Keys</span>
+                    </button>
+                </div>
             </div>
-            <div class="md:col-span-5">
-                <label class="block text-[11px] font-semibold text-slate-300 mb-1">Paystack Secret Key (Starts with sk_test_ or sk_live_)</label>
-                <input type="password" id="cfg-sec-key" value="{{ paystack_sec_key }}" placeholder="sk_test_..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-400">
-            </div>
-            <div class="md:col-span-2">
-                <button type="submit" id="save-keys-btn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20">
-                    <i class="fa-solid fa-floppy-disk"></i>
-                    <span>Save Keys</span>
-                </button>
+            <div class="flex items-center space-x-2 pt-1 text-xs text-slate-400">
+                <input type="checkbox" id="cfg-is-live" {% if is_live %}checked{% endif %} class="w-4 h-4 rounded bg-slate-950 border-slate-700 text-emerald-500">
+                <label for="cfg-is-live" class="cursor-pointer">Enable Live Production Mode (Uncheck for Sandbox testing)</label>
             </div>
         </form>
+    </div>
+
+    <!-- ===== GALLERY MANAGER CARD ===== -->
+    <div class="bg-slate-900 border border-purple-500/30 rounded-2xl p-5 shadow-lg">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3 mb-4">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center text-sm">
+                    <i class="fa-solid fa-images"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-sm text-white">Photo Gallery Manager</h3>
+                    <p class="text-[11px] text-slate-400">Upload photos directly to Cloudflare R2. They appear instantly on the public gallery.</p>
+                </div>
+            </div>
+            <span id="r2-status-badge" class="text-xs bg-slate-800 text-slate-400 border border-slate-700 px-2.5 py-1 rounded-full font-bold">
+                ⏳ Checking R2...
+            </span>
+        </div>
+
+        <!-- Upload Zone -->
+        <div id="gallery-drop-zone"
+             class="border-2 border-dashed border-slate-700 hover:border-purple-500/60 rounded-2xl p-6 text-center transition cursor-pointer mb-4"
+             onclick="document.getElementById('gallery-file-input').click()"
+             ondragover="event.preventDefault(); this.classList.add('border-purple-400')"
+             ondragleave="this.classList.remove('border-purple-400')"
+             ondrop="handleGalleryDrop(event)">
+            <i class="fa-solid fa-cloud-arrow-up text-purple-400 text-3xl mb-2"></i>
+            <p class="text-sm font-bold text-white">Click or drag &amp; drop photos here</p>
+            <p class="text-xs text-slate-400 mt-1">JPG, PNG, GIF, WEBP · Multiple files allowed · No size limit</p>
+            <input type="file" id="gallery-file-input" multiple accept="image/*" class="hidden" onchange="uploadGalleryPhotos(this.files)">
+        </div>
+
+        <!-- Upload Progress -->
+        <div id="gallery-upload-progress" class="hidden mb-4">
+            <div class="flex items-center gap-2 text-xs text-purple-300 mb-1">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                <span id="gallery-upload-msg">Uploading to Cloudflare R2...</span>
+            </div>
+            <div class="w-full bg-slate-800 rounded-full h-1.5">
+                <div id="gallery-upload-bar" class="bg-purple-400 h-1.5 rounded-full transition-all" style="width:0%"></div>
+            </div>
+        </div>
+
+        <!-- Existing Photos Grid -->
+        <div>
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold text-slate-300">Photos in R2 Bucket</span>
+                <button onclick="loadAdminGallery()" class="text-xs text-purple-400 hover:text-purple-300 transition flex items-center gap-1">
+                    <i class="fa-solid fa-rotate-right"></i> Refresh
+                </button>
+            </div>
+            <div id="admin-gallery-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                <div class="col-span-full text-center py-6 text-slate-500 text-xs">
+                    <i class="fa-solid fa-spinner fa-spin mr-1"></i> Loading photos...
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Search & Filter Controls -->
@@ -127,7 +190,7 @@
             <select id="admin-category-filter" onchange="loadRegistrations()" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-yellow-400 w-full md:w-auto">
                 <option value="all">All Categories</option>
                 <option value="cycling">Cycling (KSh 700)</option>
-                <option value="skating">Skating (KSh 500)</option>
+                <option value="skating">Skating (KSh 700)</option>
                 <option value="group_of_3">Group of 3 (KSh 1,500)</option>
                 <option value="walking">Walking (KSh 500)</option>
             </select>
