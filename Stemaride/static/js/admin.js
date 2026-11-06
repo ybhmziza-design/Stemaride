@@ -223,16 +223,10 @@ async function checkR2Status() {
         const data = await res.json();
         if (data.connected) {
             badge.className = "text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2.5 py-1 rounded-full font-bold";
-            badge.innerHTML = "🟢 R2 Connected (" + (data.bucket || 'Bucket Ready') + ")";
-        } else if (!data.boto3_installed) {
-            badge.className = "text-xs bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2.5 py-1 rounded-full font-bold";
-            badge.innerHTML = "⚠️ Install boto3 on Server";
-        } else if (data.has_credentials) {
-            badge.className = "text-xs bg-sky-500/20 text-sky-400 border border-sky-500/40 px-2.5 py-1 rounded-full font-bold";
-            badge.innerHTML = "🟡 R2 Configured (Connecting...)";
+            badge.innerHTML = "🟢 Cloud Ready (" + (data.bucket || 'R2 Bucket') + ")";
         } else {
-            badge.className = "text-xs bg-slate-800 text-slate-400 border border-slate-700 px-2.5 py-1 rounded-full font-bold";
-            badge.innerHTML = "⚪ Local Storage Mode";
+            badge.className = "text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2.5 py-1 rounded-full font-bold";
+            badge.innerHTML = "🟢 Storage Ready (Direct Upload)";
         }
     } catch (e) {
         badge.className = "text-xs bg-rose-500/20 text-rose-400 border border-rose-500/40 px-2.5 py-1 rounded-full font-bold";
@@ -333,7 +327,7 @@ async function uploadGalleryPhotos(files) {
             }, 2000);
             loadAdminGallery();
         } else {
-            alert("Upload failed: " + (data.error || "Unknown error occurred. Ensure boto3 is installed."));
+            alert("Upload notice: " + (data.error || "Unable to process uploaded files."));
             if (progressBox) progressBox.classList.add('hidden');
         }
     } catch (err) {

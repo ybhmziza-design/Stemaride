@@ -96,8 +96,13 @@ function onCategoryChanged() {
         calculateTotal(700, 'Cycling Individual', 'cycling');
     } else if (category === 'skating') {
         if (promptSkating) promptSkating.classList.remove('hidden');
-        if (heading) heading.innerText = "Skating Options";
-        calculateTotal(500, 'Skating', 'skating');
+        if (heading) heading.innerText = "Skating Options & Equipment";
+        // Reset skate option to 'own' when switching to skating
+        const skateOwnRadio = document.getElementById('skate_own');
+        if (skateOwnRadio) skateOwnRadio.checked = true;
+        const skateHireDetails = document.getElementById('skate_hire_details');
+        if (skateHireDetails) skateHireDetails.classList.add('hidden');
+        calculateTotal(700, 'Skating Individual', 'skating');
     } else if (category === 'group_of_3') {
         if (promptGroup) promptGroup.classList.remove('hidden');
         if (heading) heading.innerText = "Group of 3 Participants Registration";
@@ -122,12 +127,23 @@ function onBikeOptionChanged() {
         }
     }
 
-    // Update price
-    if (isHire) {
-        calculateTotal(700, 'Cycling Individual', 'cycling', true);
-    } else {
-        calculateTotal(700, 'Cycling Individual', 'cycling', false);
+    calculateTotal(700, 'Cycling Individual', 'cycling', isHire);
+}
+
+function onSkateOptionChanged() {
+    const skateHireRadio = document.getElementById('skate_hire');
+    const skateHireDetails = document.getElementById('skate_hire_details');
+    const isHire = skateHireRadio && skateHireRadio.checked;
+
+    if (skateHireDetails) {
+        if (isHire) {
+            skateHireDetails.classList.remove('hidden');
+        } else {
+            skateHireDetails.classList.add('hidden');
+        }
     }
+
+    calculateTotal(700, 'Skating Individual', 'skating', isHire);
 }
 
 function calculateTotal(basePrice, label, category, forceHire) {
@@ -135,8 +151,9 @@ function calculateTotal(basePrice, label, category, forceHire) {
     const feeBreakdown = document.getElementById('fee_breakdown_label');
 
     let hireCost = 0;
+    let hireTypeLabel = 'Equipment Rental';
+
     if (category === 'cycling') {
-        // Check if forceHire was explicitly passed; otherwise read the radio
         let isHire = false;
         if (typeof forceHire !== 'undefined') {
             isHire = forceHire;
@@ -144,7 +161,22 @@ function calculateTotal(basePrice, label, category, forceHire) {
             const bikeHireRadio = document.getElementById('bike_hire');
             isHire = bikeHireRadio && bikeHireRadio.checked;
         }
-        if (isHire) hireCost = 500;
+        if (isHire) {
+            hireCost = 500;
+            hireTypeLabel = 'Bike Rental';
+        }
+    } else if (category === 'skating') {
+        let isHire = false;
+        if (typeof forceHire !== 'undefined') {
+            isHire = forceHire;
+        } else {
+            const skateHireRadio = document.getElementById('skate_hire');
+            isHire = skateHireRadio && skateHireRadio.checked;
+        }
+        if (isHire) {
+            hireCost = 500;
+            hireTypeLabel = 'Skate Rental';
+        }
     }
 
     const total = basePrice + hireCost;
@@ -155,7 +187,7 @@ function calculateTotal(basePrice, label, category, forceHire) {
     if (feeBreakdown) {
         let breakdown = `(${label}: KSh ${basePrice.toLocaleString()}`;
         if (hireCost > 0) {
-            breakdown += ` + Bike Rental: KSh 500 = KSh ${total.toLocaleString()}`;
+            breakdown += ` + ${hireTypeLabel}: KSh 500 = KSh ${total.toLocaleString()}`;
         }
         breakdown += `)`;
         feeBreakdown.innerText = breakdown;
@@ -208,18 +240,34 @@ async function handleRegistration(e) {
     const isMinorBox = document.getElementById('is_minor_checkbox');
     const isMinor = isMinorBox ? isMinorBox.checked : false;
 
-    // Check equipment hire — driven by bike_option radio (cycling only)
+    // Check equipment hire — driven by bike_option or skate_option radio
     const bikeHireRadio = document.getElementById('bike_hire');
-    const needsHire = selectedCategory === 'cycling' && bikeHireRadio && bikeHireRadio.checked;
+    const skateHireRadio = document.getElementById('skate_hire');
+    let needsHire = false;
+
+    if (selectedCategory === 'cycling') {
+        needsHire = !!(bikeHireRadio && bikeHireRadio.checked);
+    } else if (selectedCategory === 'skating') {
+        needsHire = !!(skateHireRadio && skateHireRadio.checked);
+    }
 
     const hireDetails = {};
     if (needsHire) {
-        const itemEl = document.getElementById('hire_item_type');
-        const sizeEl = document.getElementById('hire_shoe_size');
-        const kitEl = document.getElementById('hire_safety_kit');
-        hireDetails.hire_item = itemEl ? itemEl.value : (selectedCategory === 'skating' ? 'Roller Skates' : 'Bicycle');
-        hireDetails.size = sizeEl && sizeEl.value.trim() ? sizeEl.value.trim() : 'Standard';
-        hireDetails.safety_kit = kitEl ? kitEl.value : 'Helmet Included';
+        if (selectedCategory === 'cycling') {
+            const itemEl = document.getElementById('hire_item_type');
+            const sizeEl = document.getElementById('hire_shoe_size');
+            const kitEl = document.getElementById('hire_safety_kit');
+            hireDetails.hire_item = itemEl ? itemEl.value : 'Bicycle';
+            hireDetails.size = sizeEl && sizeEl.value.trim() ? sizeEl.value.trim() : 'Standard Frame';
+            hireDetails.safety_kit = kitEl ? kitEl.value : 'Helmet Included';
+        } else if (selectedCategory === 'skating') {
+            const itemEl = document.getElementById('skate_item_type');
+            const sizeEl = document.getElementById('skate_shoe_size');
+            const kitEl = document.getElementById('skate_safety_kit');
+            hireDetails.hire_item = itemEl ? itemEl.value : 'Inline Skates';
+            hireDetails.size = sizeEl && sizeEl.value.trim() ? sizeEl.value.trim() : 'Standard Skate Size';
+            hireDetails.safety_kit = kitEl ? kitEl.value : 'Helmet + Knee & Elbow Guards';
+        }
     }
 
     // Prepare category details

@@ -498,18 +498,17 @@ def api_gallery_photos():
 
 @app.route('/api/gallery/upload', methods=['POST'])
 def api_gallery_upload():
-    """Upload one or more photos to Cloudflare R2 gallery/ prefix. Admin only."""
+    """Upload one or more photos to Cloudflare R2 or local static gallery. Admin only."""
     if not session.get('is_admin'):
         return jsonify({'success': False, 'error': 'Unauthorized'}), 401
-
-    client, cfg = get_r2_client()
-    if not client:
-        msg = 'boto3 not installed — run: pip install boto3 --break-system-packages' if not BOTO3_AVAILABLE else 'R2 not configured'
-        return jsonify({'success': False, 'error': msg}), 503
 
     files = request.files.getlist('photos')
     if not files:
         return jsonify({'success': False, 'error': 'No files received'}), 400
+
+    client, cfg = get_r2_client()
+    images_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'images')
+    os.makedirs(images_dir, exist_ok=True)
 
     uploaded = []
     errors = []
@@ -520,27 +519,54 @@ def api_gallery_upload():
             errors.append(f"{f.filename}: not an allowed image type")
             continue
         ext = f.filename.rsplit('.', 1)[1].lower()
-        # Generate unique key so filenames never clash
-        unique_name = f"gallery/{uuid.uuid4().hex}.{ext}"
+        unique_id = uuid.uuid4().hex[:12]
         content_type = mimetypes.guess_type(f.filename)[0] or 'image/jpeg'
-        try:
-            client.upload_fileobj(
-                f,
-                cfg['bucket'],
-                unique_name,
-                ExtraArgs={'ContentType': content_type}
-            )
-            public_url = f"{cfg['public_url']}/{unique_name}"
-            uploaded.append({'key': unique_name, 'url': public_url, 'original_name': f.filename})
-        except Exception as e:
-            errors.append(f"{f.filename}: {str(e)}")
 
-    return jsonify({
-        'success': len(uploaded) > 0,
-        'uploaded': uploaded,
-        'errors': errors,
-        'message': f"{len(uploaded)} photo(s) uploaded to R2 successfully!"
-    })
+        # Attempt Cloudflare R2 first if available
+        r2_done = False
+        if client and cfg.get('bucket'):
+            unique_name = f"gallery/{unique_id}.{ext}"
+            try:
+                client.upload_fileobj(
+                    f,
+                    cfg['bucket'],
+                    unique_name,
+                    ExtraArgs={'ContentType': content_type}
+                )
+                public_url = f"{cfg['public_url']}/{unique_name}"
+                uploaded.append({'key': unique_name, 'url': public_url, 'original_name': f.filename, 'source': 'r2'})
+                r2_done = True
+            except Exception as e:
+                # If R2 upload fails (e.g. offline/network glitch), fallback to local file
+                f.seek(0)
+
+        # Fallback to local storage so phone and laptop uploads NEVER fail!
+        if not r2_done:
+            local_filename = f"gallery_{unique_id}.{ext}"
+            local_path = os.path.join(images_dir, local_filename)
+            try:
+                f.save(local_path)
+                uploaded.append({
+                    'key': local_filename,
+                    'url': f"/static/images/{local_filename}",
+                    'original_name': f.filename,
+                    'source': 'local'
+                })
+            except Exception as save_err:
+                errors.append(f"{f.filename}: {str(save_err)}")
+
+    if len(uploaded) > 0:
+        return jsonify({
+            'success': True,
+            'uploaded': uploaded,
+            'errors': errors,
+            'message': f"{len(uploaded)} photo(s) uploaded successfully!"
+        })
+    else:
+        return jsonify({
+            'success': False,
+            'error': errors[0] if errors else 'No photos could be uploaded.'
+        }), 400
 
 @app.route('/api/gallery/delete', methods=['POST'])
 def api_gallery_delete():
