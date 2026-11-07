@@ -49,8 +49,14 @@ def init_db():
         cols = [c[1] for c in cursor.fetchall()]
         if 'intasend_reference' not in cols:
             cursor.execute("ALTER TABLE registrations ADD COLUMN intasend_reference TEXT")
+        if 'tinypesa_reference' not in cols:
+            cursor.execute("ALTER TABLE registrations ADD COLUMN tinypesa_reference TEXT")
         if 'paystack_reference' not in cols:
             cursor.execute("ALTER TABLE registrations ADD COLUMN paystack_reference TEXT")
+        if 'payment_attempts' not in cols:
+            cursor.execute("ALTER TABLE registrations ADD COLUMN payment_attempts INTEGER DEFAULT 0")
+        if 'payment_blocked' not in cols:
+            cursor.execute("ALTER TABLE registrations ADD COLUMN payment_blocked INTEGER DEFAULT 0")
         conn.commit()
     except Exception:
         pass
@@ -132,11 +138,12 @@ def search_registration(query):
                OR UPPER(ticket_code) = UPPER(?)
                OR phone_number LIKE ? 
                OR phone_number LIKE ?
+               OR UPPER(tinypesa_reference) = UPPER(?)
                OR UPPER(intasend_reference) = UPPER(?)
                OR UPPER(paystack_reference) = UPPER(?)
                OR UPPER(mpesa_reference) = UPPER(?))
         ORDER BY id DESC
-    ''', (clean_query, clean_query, f"%{clean_query}%", f"%{phone_alt}%", clean_query, clean_query, clean_query))
+    ''', (clean_query, clean_query, f"%{clean_query}%", f"%{phone_alt}%", clean_query, clean_query, clean_query, clean_query))
     rows = cursor.fetchall()
     conn.close()
     return [dict(r) for r in rows]
@@ -187,6 +194,79 @@ def update_status(ticket_code, payment_status=None, checked_in=None):
                        (checked_in, ticket_code))
     conn.commit()
     conn.close()
+
+def mark_paid_tinypesa(ticket_code, mpesa_code, tinypesa_id=None):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    m_code = (mpesa_code or '').strip().upper()
+    t_id = (tinypesa_id or m_code).strip()
+    cursor.execute("""
+        UPDATE registrations 
+        SET payment_status = 'Paid (M-Pesa)', 
+            mpesa_reference = COALESCE(NULLIF(?, ''), mpesa_reference, ?),
+            tinypesa_reference = ?,
+            payment_blocked = 0
+        WHERE UPPER(ticket_code) = UPPER(?)
+    """, (m_code, m_code, t_id, ticket_code.strip()))
+    conn.commit()
+    cursor.execute("SELECT * FROM registrations WHERE UPPER(ticket_code) = UPPER(?)", (ticket_code.strip(),))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+def record_manual_payment_submission(ticket_code, mpesa_code):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    m_code = (mpesa_code or '').strip().upper()
+    cursor.execute("""
+        UPDATE registrations 
+        SET mpesa_reference = COALESCE(NULLIF(?, ''), mpesa_reference),
+            payment_status = 'Pending Verification'
+        WHERE UPPER(ticket_code) = UPPER(?)
+    """, (m_code, ticket_code.strip()))
+    conn.commit()
+    cursor.execute("SELECT * FROM registrations WHERE UPPER(ticket_code) = UPPER(?)", (ticket_code.strip(),))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+def increment_payment_attempts(ticket_code, reason=None):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT payment_attempts, payment_blocked FROM registrations WHERE UPPER(ticket_code) = UPPER(?)", (ticket_code.strip(),))
+    row = cursor.fetchone()
+    if not row:
+        conn.close()
+        return None
+    
+    current_attempts = (row['payment_attempts'] or 0) + 1
+    is_blocked = 1 if current_attempts >= 4 else (row['payment_blocked'] or 0)
+    
+    cursor.execute("""
+        UPDATE registrations 
+        SET payment_attempts = ?, payment_blocked = ?
+        WHERE UPPER(ticket_code) = UPPER(?)
+    """, (current_attempts, is_blocked, ticket_code.strip()))
+    conn.commit()
+    
+    cursor.execute("SELECT * FROM registrations WHERE UPPER(ticket_code) = UPPER(?)", (ticket_code.strip(),))
+    updated = cursor.fetchone()
+    conn.close()
+    return dict(updated) if updated else None
+
+def unblock_ticket(ticket_code):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE registrations 
+        SET payment_blocked = 0, payment_attempts = 0
+        WHERE UPPER(ticket_code) = UPPER(?)
+    """, (ticket_code.strip(),))
+    conn.commit()
+    cursor.execute("SELECT * FROM registrations WHERE UPPER(ticket_code) = UPPER(?)", (ticket_code.strip(),))
+    updated = cursor.fetchone()
+    conn.close()
+    return dict(updated) if updated else None
 
 def mark_paid_intasend(ticket_code, reference, mpesa_code=None):
     conn = get_db_connection()
@@ -264,6 +344,13 @@ def get_statistics():
         WHERE is_minor = 1 AND (payment_status LIKE '%Paid%' OR payment_status = 'Confirmed')
     """)
     minor_stats = cursor.fetchone()
+
+    cursor.execute("""
+        SELECT COUNT(*) as blocked_count 
+        FROM registrations 
+        WHERE payment_blocked = 1 AND payment_status NOT LIKE '%Paid%' AND payment_status != 'Confirmed'
+    """)
+    blocked_stats = cursor.fetchone()
     
     conn.close()
     return {
@@ -272,5 +359,6 @@ def get_statistics():
         "category_breakdown": category_stats,
         "equipment_hires": hire_stats['hire_count'] if hire_stats else 0,
         "checked_in_count": checkin_stats['checked_in_count'] if checkin_stats else 0,
-        "minor_count": minor_stats['minor_count'] if minor_stats else 0
+        "minor_count": minor_stats['minor_count'] if minor_stats else 0,
+        "blocked_count": blocked_stats['blocked_count'] if blocked_stats else 0
     }

@@ -4,6 +4,7 @@ import json
 import csv
 import io
 import os
+import re
 import requests
 import uuid
 import mimetypes
@@ -24,6 +25,7 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'stema_ride_secure_session_key_2026')
 
 ADMIN_PIN = os.environ.get('ADMIN_PIN', 'stema2026')
+SUPPORT_PHONE = os.environ.get('SUPPORT_PHONE', '0740853389')
 
 # Initialize database on startup
 database.init_db()
@@ -44,6 +46,55 @@ def load_env():
             pass
     return env_vars
 
+def update_env_file(updates: dict):
+    lines = []
+    if os.path.exists(ENV_FILE):
+        with open(ENV_FILE, 'r') as f:
+            lines = f.readlines()
+    seen = set()
+    new_lines = []
+    for line in lines:
+        stripped = line.strip()
+        if stripped and not stripped.startswith('#') and '=' in stripped:
+            k, _ = stripped.split('=', 1)
+            k = k.strip()
+            if k in updates:
+                new_lines.append(f"{k}={updates[k]}\n")
+                seen.add(k)
+                continue
+        new_lines.append(line)
+    for k, v in updates.items():
+        if k not in seen:
+            new_lines.append(f"{k}={v}\n")
+    with open(ENV_FILE, 'w') as f:
+        f.writelines(new_lines)
+
+def get_tinypesa_config():
+    env = load_env()
+    api_key = (os.environ.get('TINYPESA_API_KEY') or 
+               env.get('TINYPESA_API_KEY') or 
+               '').strip()
+    username = (os.environ.get('TINYPESA_USERNAME') or 
+                env.get('TINYPESA_USERNAME') or 
+                'Stemaride').strip()
+    return {
+        'api_key': api_key,
+        'username': username,
+        'has_keys': bool(api_key and username)
+    }
+
+def format_phone_tinypesa(phone):
+    if not phone:
+        return ''
+    p = re.sub(r'\D', '', str(phone))
+    if p.startswith('0') and len(p) == 10:
+        return '254' + p[1:]
+    elif p.startswith('254') and len(p) == 12:
+        return p
+    elif len(p) == 9 and (p.startswith('7') or p.startswith('1')):
+        return '254' + p
+    return p
+
 def get_intasend_keys():
     env = load_env()
     pub = (os.environ.get('INTASEND_PUBLIC_KEY') or 
@@ -52,7 +103,6 @@ def get_intasend_keys():
     sec = (os.environ.get('INTASEND_SECRET_KEY') or 
            env.get('INTASEND_SECRET_KEY') or 
            '')
-    # is_live is True when public key starts with ISPubKey_live_ or user sets INTASEND_LIVE=true
     is_live = bool('live' in pub.lower() or os.environ.get('INTASEND_LIVE') == 'true')
     return pub, sec, is_live
 
@@ -89,9 +139,18 @@ def get_r2_client():
 
 @app.route('/')
 def home():
+    tinypesa_cfg = get_tinypesa_config()
     pub_key, sec_key, is_live = get_intasend_keys()
     has_keys = bool(pub_key)
-    return render_template('index.html', intasend_pub_key=pub_key, is_live=is_live, has_keys=has_keys)
+    return render_template(
+        'index.html', 
+        tinypesa_username=tinypesa_cfg['username'],
+        has_tinypesa=tinypesa_cfg['has_keys'],
+        support_phone=SUPPORT_PHONE,
+        intasend_pub_key=pub_key, 
+        is_live=is_live, 
+        has_keys=has_keys
+    )
 
 @app.route('/ticket/<ticket_code>')
 def ticket_view(ticket_code):
@@ -111,6 +170,7 @@ def ticket_view(ticket_code):
     
     return render_template('ticket.html', 
                            reg=reg, 
+                           support_phone=SUPPORT_PHONE,
                            hire_details=hire_details, 
                            group_members=group_members, 
                            category_details=category_details)
@@ -138,8 +198,21 @@ def admin_view():
     if not session.get('is_admin'):
         return redirect(url_for('admin_login'))
     stats = database.get_statistics()
+    tinypesa_cfg = get_tinypesa_config()
     pub_key, sec_key, is_live = get_intasend_keys()
-    return render_template('admin.html', stats=stats, intasend_pub_key=pub_key, intasend_sec_key=sec_key, is_live=is_live)
+    webhook_url = request.host_url.rstrip('/') + '/api/tinypesa/webhook'
+    return render_template(
+        'admin.html', 
+        stats=stats, 
+        support_phone=SUPPORT_PHONE,
+        tinypesa_api_key=tinypesa_cfg['api_key'],
+        tinypesa_username=tinypesa_cfg['username'],
+        has_tinypesa=tinypesa_cfg['has_keys'],
+        webhook_url=webhook_url,
+        intasend_pub_key=pub_key, 
+        intasend_sec_key=sec_key, 
+        is_live=is_live
+    )
 
 # =========================
 # API ENDPOINTS
@@ -205,6 +278,7 @@ def api_register():
         # Save to database (starts as 'Pending Payment')
         saved_reg = database.create_registration(data)
         
+        tinypesa_cfg = get_tinypesa_config()
         pub_key, _, is_live = get_intasend_keys()
         
         return jsonify({
@@ -213,13 +287,291 @@ def api_register():
             'registration': saved_reg,
             'amount_due': calculated_total,
             'currency': 'KES',
+            'phone_number': saved_reg['phone_number'],
+            'tinypesa_username': tinypesa_cfg['username'],
+            'has_tinypesa': tinypesa_cfg['has_keys'],
             'intasend_public_key': pub_key,
             'is_live': is_live,
-            'message': 'Registration initiated. Complete payment via IntaSend (M-Pesa / Card) to unlock your ticket pass!'
+            'message': 'Registration initiated. Complete payment via M-Pesa to unlock your ticket pass!'
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+# ==========================================
+# TINYPESA M-PESA STK PUSH & WEBHOOK ROUTES
+# ==========================================
+
+@app.route('/api/tinypesa/config', methods=['GET'])
+def tinypesa_config():
+    cfg = get_tinypesa_config()
+    webhook_url = request.host_url.rstrip('/') + '/api/tinypesa/webhook'
+    return jsonify({
+        'success': True,
+        'username': cfg['username'],
+        'has_keys': cfg['has_keys'],
+        'webhook_url': webhook_url
+    })
+
+@app.route('/api/tinypesa/stk-push', methods=['POST'])
+def tinypesa_stk_push():
+    try:
+        data = request.get_json() or {}
+        ticket_code = data.get('ticket_code', '').strip()
+        phone = data.get('phone_number', '').strip()
+        
+        if not ticket_code:
+            return jsonify({'success': False, 'error': 'Ticket code is required.'}), 400
+            
+        reg = database.get_registration_by_code(ticket_code)
+        if not reg:
+            return jsonify({'success': False, 'error': 'Registration not found.'}), 404
+            
+        # Check if already paid
+        if reg['payment_status'] and ('Paid' in reg['payment_status'] or reg['payment_status'] == 'Confirmed'):
+            return jsonify({
+                'success': True, 
+                'already_paid': True, 
+                'ticket_code': ticket_code,
+                'message': 'This ticket is already confirmed and paid.'
+            })
+        
+        # Check if ticket is blocked due to 4 or more attempts
+        attempts = reg.get('payment_attempts') or 0
+        if reg.get('payment_blocked') == 1 or attempts >= 4:
+            return jsonify({
+                'success': False,
+                'blocked': True,
+                'ticket_code': ticket_code,
+                'attempts': attempts,
+                'support_phone': SUPPORT_PHONE,
+                'error': f'Payment attempts limit reached ({attempts} failed attempts). Your ticket has been locked to prevent credit loss. Please call or text {SUPPORT_PHONE} to unblock or complete payment.'
+            }), 403
+        
+        target_phone = phone or reg['phone_number']
+        formatted_phone = format_phone_tinypesa(target_phone)
+        if not formatted_phone or len(formatted_phone) < 10:
+            return jsonify({'success': False, 'error': 'A valid Kenyan phone number (e.g. 0712345678) is required.'}), 400
+            
+        tinypesa_cfg = get_tinypesa_config()
+        if not tinypesa_cfg['api_key'] or not tinypesa_cfg['username']:
+            return jsonify({
+                'success': False, 
+                'error': 'TinyPesa API key or username is not configured. Please configure in Admin Settings.'
+            }), 400
+
+        # Increment attempts counter before consuming TinyPesa credits
+        updated_reg = database.increment_payment_attempts(ticket_code, reason='STK push initialized')
+        current_attempts = updated_reg.get('payment_attempts', attempts + 1)
+            
+        amount = int(reg['amount_due'])
+        url = f"https://api.tinypesa.com/api/v1/express/initialize/?username={tinypesa_cfg['username']}"
+        headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Apikey': tinypesa_cfg['api_key']
+        }
+        payload = {
+            'amount': amount,
+            'msisdn': formatted_phone,
+            'account_no': ticket_code
+        }
+        
+        app.logger.info(f"Triggering TinyPesa STK push for {ticket_code} (attempt {current_attempts}/4) to {formatted_phone} amount {amount}")
+        
+        try:
+            resp = requests.post(url, json=payload, headers=headers, timeout=15)
+            res_json = resp.json() if resp.text else {}
+        except Exception as req_err:
+            app.logger.error(f"TinyPesa request error: {req_err}")
+            return jsonify({
+                'success': False,
+                'error': f'Could not reach TinyPesa gateway: {str(req_err)}'
+            }), 502
+        
+        if resp.status_code in [200, 201] and (res_json.get('success') is True or res_json.get('request_id')):
+            request_id = res_json.get('request_id') or res_json.get('id') or ''
+            return jsonify({
+                'success': True,
+                'ticket_code': ticket_code,
+                'phone': target_phone,
+                'formatted_phone': formatted_phone,
+                'amount': amount,
+                'request_id': request_id,
+                'attempts': current_attempts,
+                'message': f'M-Pesa STK Prompt sent to {target_phone}! Check your phone and enter your PIN.'
+            })
+        else:
+            err_msg = res_json.get('message') or res_json.get('error') or resp.text or 'STK Push initialization failed.'
+            return jsonify({
+                'success': False,
+                'attempts': current_attempts,
+                'error': f'TinyPesa error: {err_msg}'
+            }), 400
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/tinypesa/webhook', methods=['POST'])
+def tinypesa_webhook():
+    try:
+        payload = request.get_json(force=True, silent=True) or {}
+        app.logger.info("TinyPesa Webhook Callback received: %s", payload)
+        
+        body = payload.get('Body', {})
+        stk_callback = body.get('stkCallback', {}) if isinstance(body, dict) else {}
+        result_code = stk_callback.get('ResultCode')
+        
+        ext_ref = (payload.get('ExternalReference') or 
+                   stk_callback.get('ExternalReference') or 
+                   (body.get('ExternalReference') if isinstance(body, dict) else None) or '').strip()
+        
+        tinypesa_id = (payload.get('TinyPesaID') or 
+                       stk_callback.get('TinyPesaID') or 
+                       (body.get('TinyPesaID') if isinstance(body, dict) else None) or '').strip()
+        
+        msisdn = (payload.get('Msisdn') or 
+                  stk_callback.get('Msisdn') or 
+                  (body.get('Msisdn') if isinstance(body, dict) else None) or '').strip()
+        
+        mpesa_receipt = ''
+        meta_items = stk_callback.get('CallbackMetadata', {}).get('Item', [])
+        for item in meta_items:
+            if isinstance(item, dict):
+                if item.get('Name') == 'MpesaReceiptNumber':
+                    mpesa_receipt = str(item.get('Value', '')).strip().upper()
+                elif item.get('Name') == 'PhoneNumber' and not msisdn:
+                    msisdn = str(item.get('Value', '')).strip()
+                    
+        ticket_code = ext_ref
+        if not ticket_code and msisdn:
+            regs = database.search_registration(msisdn)
+            for r in regs:
+                if 'Paid' not in r.get('payment_status', ''):
+                    ticket_code = r['ticket_code']
+                    break
+                    
+        if result_code == 0:
+            if ticket_code:
+                database.mark_paid_tinypesa(ticket_code, mpesa_receipt or tinypesa_id, tinypesa_id)
+                app.logger.info(f"Payment marked successfully for ticket {ticket_code} with receipt {mpesa_receipt}")
+                return jsonify({'status': 'success', 'ticket_code': ticket_code, 'message': 'Payment confirmed'}), 200
+            else:
+                return jsonify({'status': 'warning', 'message': 'Payment successful but ticket reference could not be matched'}), 200
+        else:
+            desc = stk_callback.get('ResultDesc', 'Payment not completed or cancelled by user')
+            app.logger.warning(f"TinyPesa callback non-zero ResultCode: {result_code} - {desc}")
+            if ticket_code:
+                updated_reg = database.increment_payment_attempts(ticket_code, reason=desc)
+                app.logger.warning(f"Ticket {ticket_code} payment failed: {desc}. Attempts: {updated_reg.get('payment_attempts') if updated_reg else '?'}")
+            return jsonify({'status': 'cancelled_or_failed', 'message': desc}), 200
+    except Exception as e:
+        app.logger.error(f"TinyPesa webhook error: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 200
+
+@app.route('/api/payment/status/<ticket_code>', methods=['GET'])
+def payment_status(ticket_code):
+    reg = database.get_registration_by_code(ticket_code)
+    if not reg:
+        return jsonify({'success': False, 'error': 'Ticket not found'}), 404
+        
+    is_paid = reg['payment_status'] and ('Paid' in reg['payment_status'] or reg['payment_status'] == 'Confirmed')
+    attempts = reg.get('payment_attempts') or 0
+    is_blocked = bool(reg.get('payment_blocked') == 1 or attempts >= 4)
+    return jsonify({
+        'success': True,
+        'paid': bool(is_paid),
+        'blocked': is_blocked,
+        'attempts': attempts,
+        'support_phone': SUPPORT_PHONE,
+        'status': reg['payment_status'],
+        'ticket_code': reg['ticket_code'],
+        'mpesa_reference': reg['mpesa_reference'],
+        'registration': reg,
+        'download_url': f'/ticket/{reg["ticket_code"]}?download=1',
+        'ticket_url': f'/ticket/{reg["ticket_code"]}'
+    })
+
+@app.route('/api/admin/unblock-ticket', methods=['POST'])
+def admin_unblock_ticket():
+    if not session.get('is_admin'):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    try:
+        data = request.get_json() or {}
+        ticket_code = data.get('ticket_code', '').strip()
+        if not ticket_code:
+            return jsonify({'success': False, 'error': 'Ticket code is required'}), 400
+        reg = database.unblock_ticket(ticket_code)
+        if not reg:
+            return jsonify({'success': False, 'error': 'Ticket not found'}), 404
+        return jsonify({
+            'success': True, 
+            'message': f'Ticket {ticket_code} unblocked successfully! Attempts reset to 0.',
+            'registration': reg
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/payment/manual-confirm', methods=['POST'])
+def manual_payment_confirm():
+    try:
+        data = request.get_json() or {}
+        ticket_code = data.get('ticket_code', '').strip()
+        mpesa_code = data.get('mpesa_reference', '').strip().upper()
+        
+        if not ticket_code:
+            return jsonify({'success': False, 'error': 'Ticket code is required'}), 400
+        if not mpesa_code:
+            return jsonify({'success': False, 'error': 'M-Pesa reference code is required (e.g. QWE123RTY)'}), 400
+            
+        reg = database.get_registration_by_code(ticket_code)
+        if not reg:
+            return jsonify({'success': False, 'error': 'Registration not found'}), 404
+            
+        if session.get('is_admin'):
+            updated = database.mark_paid_tinypesa(ticket_code, mpesa_code, 'MANUAL-' + mpesa_code)
+            return jsonify({
+                'success': True,
+                'verified': True,
+                'ticket_code': ticket_code,
+                'mpesa_reference': mpesa_code,
+                'registration': updated,
+                'download_url': f'/ticket/{ticket_code}?download=1',
+                'ticket_url': f'/ticket/{ticket_code}',
+                'message': 'Payment confirmed successfully by admin! Ticket is now active.'
+            })
+        else:
+            updated = database.record_manual_payment_submission(ticket_code, mpesa_code)
+            return jsonify({
+                'success': True,
+                'verified': False,
+                'ticket_code': ticket_code,
+                'mpesa_reference': mpesa_code,
+                'registration': updated,
+                'support_phone': SUPPORT_PHONE,
+                'message': f'M-Pesa code {mpesa_code} submitted for verification. Your ticket will unlock as soon as payment is confirmed. For instant activation, please call or WhatsApp {SUPPORT_PHONE}.'
+            })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/admin/save-tinypesa-keys', methods=['POST'])
+def save_tinypesa_keys():
+    try:
+        data = request.get_json() or {}
+        api_key = data.get('api_key', '').strip()
+        username = data.get('username', '').strip()
+        
+        if not username:
+            return jsonify({'success': False, 'error': 'TinyPesa username is required'}), 400
+            
+        update_env_file({
+            'TINYPESA_API_KEY': api_key,
+            'TINYPESA_USERNAME': username
+        })
+        return jsonify({'success': True, 'message': 'TinyPesa configuration saved successfully!'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# Retain IntaSend verify routes for fallback / backward compatibility
 @app.route('/api/intasend/verify', methods=['POST'])
 def intasend_verify():
     try:
@@ -234,7 +586,6 @@ def intasend_verify():
         pub_key, sec_key, is_live = get_intasend_keys()
         verified = False
 
-        # If Secret key or Token is provided, verify using IntaSend Payment Status API
         if sec_key and tracking_id:
             try:
                 base_url = "https://payment.intasend.com" if is_live else "https://sandbox.intasend.com"
@@ -258,7 +609,6 @@ def intasend_verify():
             except Exception:
                 verified = True
         else:
-            # Sandbox / Pre-verification simulation mode
             verified = True
 
         if verified:
@@ -277,7 +627,6 @@ def intasend_verify():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-# Retain legacy paystack verify route for backward compatibility
 @app.route('/api/paystack/verify', methods=['POST'])
 def paystack_verify_legacy():
     return intasend_verify()
@@ -290,12 +639,11 @@ def save_intasend_keys():
         sec = data.get('secret_key', '').strip()
         live_flag = 'true' if data.get('is_live') else 'false'
         
-        with open(ENV_FILE, 'w') as f:
-            f.write(f"# IntaSend API Keys for STEMA (Ride • Skate • Walk)\n")
-            f.write(f"INTASEND_PUBLIC_KEY={pub}\n")
-            f.write(f"INTASEND_SECRET_KEY={sec}\n")
-            f.write(f"INTASEND_LIVE={live_flag}\n")
-            
+        update_env_file({
+            'INTASEND_PUBLIC_KEY': pub,
+            'INTASEND_SECRET_KEY': sec,
+            'INTASEND_LIVE': live_flag
+        })
         return jsonify({'success': True, 'message': 'IntaSend keys saved successfully!'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500

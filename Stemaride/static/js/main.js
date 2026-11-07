@@ -357,8 +357,8 @@ async function handleRegistration(e) {
             return;
         }
 
-        // Proceed to IntaSend payment
-        initiateIntaSendPayment(data, payload);
+        // Proceed to TinyPesa M-Pesa payment
+        initiateTinyPesaPayment(data, payload);
 
     } catch (err) {
         alert("An error occurred while connecting to the server. Please try again.");
@@ -370,105 +370,324 @@ async function handleRegistration(e) {
     }
 }
 
-// Global active checkout state
+// Global active checkout state & polling interval
 let currentPendingPayment = null;
+let paymentPollInterval = null;
 
-function initiateIntaSendPayment(regData, payload) {
-    const pubKey = regData.intasend_public_key || window.INTASEND_PUBLIC_KEY || '';
-    const isLive = regData.is_live !== undefined ? regData.is_live : (window.INTASEND_LIVE || false);
-    const email = payload.email || `${payload.phone_number.replace(/\D/g, '')}@stemaride.co.ke`;
+async function initiateTinyPesaPayment(regData, payload) {
     const amount = regData.amount_due;
     const ticketCode = regData.ticket_code;
-
-    // Split first and last name for IntaSend
-    const nameParts = (payload.full_name || 'Participant').trim().split(/\s+/);
-    const firstName = nameParts[0] || 'Participant';
-    const lastName = nameParts.slice(1).join(' ') || firstName;
+    const phone = payload.phone_number;
 
     currentPendingPayment = {
         regData: regData,
         payload: payload,
         ticketCode: ticketCode,
-        amountDue: amount
+        amountDue: amount,
+        phone: phone
     };
 
-    // If IntaSend SDK is loaded and a public key is configured
-    if (typeof window.IntaSend !== 'undefined' && pubKey && !pubKey.includes('REPLACE')) {
-        try {
-            const intasend = new window.IntaSend({
-                publicAPIKey: pubKey,
-                live: isLive
-            });
+    // Open STK prompt modal
+    openStkModal(amount, phone, ticketCode);
 
-            intasend.run({
-                amount: amount,
-                currency: "KES",
-                email: email,
-                first_name: firstName,
-                last_name: lastName,
-                phone_number: payload.phone_number,
-                api_ref: `STM-${ticketCode}`,
-                country: "KE"
+    // Trigger STK Push via backend TinyPesa API
+    try {
+        const stkStatus = document.getElementById('stk-status-text');
+        if (stkStatus) stkStatus.innerText = "Sending M-Pesa prompt to your phone...";
+
+        const res = await fetch('/api/tinypesa/stk-push', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                ticket_code: ticketCode,
+                phone_number: phone
             })
-            .on("COMPLETE", (results) => {
-                const trackingId = results.tracking_id || results.invoice_id || results.id || `IS-${Date.now().toString().slice(-6)}`;
-                const mpesaRef = results.mpesa_reference || results.provider_reference || '';
-                verifyAndUnlockTicket(trackingId, ticketCode, mpesaRef);
-            })
-            .on("FAILED", (results) => {
-                console.warn("IntaSend payment failed/cancelled:", results);
-                alert("Payment was not completed. You can try again whenever ready.");
-            })
-            .on("IN-PROGRESS", () => {
-                console.log("IntaSend checkout processing in progress...");
-            });
+        });
+
+        const data = await res.json();
+
+        if (data.already_paid) {
+            closeStkModal();
+            unlockSuccessModal(ticketCode, data.registration || regData.registration, data.mpesa_reference);
             return;
-        } catch (e) {
-            console.warn("IntaSend SDK launch error, falling back to setup modal:", e);
         }
+
+        if (data.blocked) {
+            showBlockedState(ticketCode, data.attempts);
+            return;
+        }
+
+        if (data.success) {
+            if (stkStatus) {
+                stkStatus.innerText = "Prompt sent! Enter your M-Pesa PIN on your phone...";
+            }
+            const attEl = document.getElementById('stk-attempts-counter');
+            if (attEl && data.attempts) {
+                attEl.innerText = `Attempt ${data.attempts} of 4`;
+            }
+        } else {
+            if (stkStatus) {
+                stkStatus.innerHTML = `<span class="text-amber-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i> ${data.error || 'STK push failed.'}</span>`;
+            }
+            // Auto open manual code entry if prompt failed
+            const box = document.getElementById('manual-code-box');
+            if (box) box.classList.remove('hidden');
+        }
+    } catch (err) {
+        console.warn("STK push dispatch error:", err);
     }
 
-    // Fallback: If IntaSend keys are still pending verification from IntaSend team,
-    // open the setup/simulation modal so testing and registration flows work smoothly
-    openSimModal(amount, ticketCode);
+    // Begin real-time polling to detect payment completion immediately
+    startPaymentStatusPolling(ticketCode);
 }
 
-function openSimModal(amount, ticketCode) {
-    const simAmount = document.getElementById('sim-amount');
-    const simTicket = document.getElementById('sim-ticket');
-    if (simAmount) simAmount.innerText = `KSh ${amount.toLocaleString()}`;
-    if (simTicket) simTicket.innerText = ticketCode;
+function openStkModal(amount, phone, ticketCode, attempts) {
+    const amtEl = document.getElementById('stk-modal-amount');
+    const phEl = document.getElementById('stk-modal-phone');
+    const tkEl = document.getElementById('stk-modal-ticket');
+    const statusEl = document.getElementById('stk-status-text');
+    const manualBox = document.getElementById('manual-code-box');
+    const normalCont = document.getElementById('stk-normal-container');
+    const blockedCont = document.getElementById('stk-blocked-container');
+    const attEl = document.getElementById('stk-attempts-counter');
 
-    const modal = document.getElementById('intasend-sim-modal');
+    if (normalCont) normalCont.classList.remove('hidden');
+    if (blockedCont) blockedCont.classList.add('hidden');
+    if (amtEl) amtEl.innerText = `KSh ${amount.toLocaleString()}`;
+    if (phEl) phEl.innerText = phone;
+    if (tkEl) tkEl.innerText = ticketCode;
+    if (statusEl) statusEl.innerText = "Sending prompt to your phone...";
+    if (attEl) attEl.innerText = `Attempt ${attempts || 1} of 4`;
+    if (manualBox) manualBox.classList.add('hidden');
+
+    const modal = document.getElementById('tinypesa-stk-modal');
     if (modal) modal.classList.remove('hidden');
 }
 
-async function confirmSimulatedPayment() {
-    if (!currentPendingPayment) return;
-    const simBtn = document.getElementById('sim-confirm-btn');
-    if (simBtn) {
-        simBtn.disabled = true;
-        simBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Confirming with IntaSend...`;
+function showBlockedState(ticketCode, attempts) {
+    stopPaymentStatusPolling();
+    const normalCont = document.getElementById('stk-normal-container');
+    const blockedCont = document.getElementById('stk-blocked-container');
+    const tkEl = document.getElementById('blocked-modal-ticket');
+    const callBtn = document.getElementById('blocked-call-btn');
+    const waBtn = document.getElementById('blocked-whatsapp-btn');
+
+    if (normalCont) normalCont.classList.add('hidden');
+    if (blockedCont) blockedCont.classList.remove('hidden');
+    if (tkEl) tkEl.innerText = ticketCode || '--';
+
+    const phone = window.SUPPORT_PHONE || '0740853389';
+    if (callBtn) callBtn.href = `tel:${phone}`;
+    if (waBtn) {
+        const intlPhone = '254' + phone.replace(/^0/, '');
+        waBtn.href = `https://wa.me/${intlPhone}?text=Hello%20STEMA%20Team%2C%20please%20unblock%20my%20ticket%20${ticketCode}%20for%20payment.`;
     }
 
-    const simRef = `IS-TEST-${Date.now().toString().slice(-6)}`;
-    await verifyAndUnlockTicket(simRef, currentPendingPayment.ticketCode);
-
-    if (simBtn) {
-        simBtn.disabled = false;
-        simBtn.innerHTML = `<i class="fa-solid fa-check-circle mr-1"></i> Complete Payment & Get Ticket`;
-    }
-    closeSimModal();
+    const modal = document.getElementById('tinypesa-stk-modal');
+    if (modal) modal.classList.remove('hidden');
 }
 
-function closeSimModal() {
-    const modal = document.getElementById('intasend-sim-modal');
+function closeStkModal() {
+    stopPaymentStatusPolling();
+    const modal = document.getElementById('tinypesa-stk-modal');
     if (modal) modal.classList.add('hidden');
 }
 
+function startPaymentStatusPolling(ticketCode) {
+    stopPaymentStatusPolling();
+    let pollCount = 0;
+    const maxPolls = 48; // ~2 minutes polling at 2.5s intervals
+
+    paymentPollInterval = setInterval(async () => {
+        pollCount++;
+        try {
+            const res = await fetch(`/api/payment/status/${ticketCode}`);
+            const data = await res.json();
+
+            if (data.success && data.paid) {
+                stopPaymentStatusPolling();
+                closeStkModal();
+                unlockSuccessModal(ticketCode, data.registration, data.mpesa_reference);
+                return;
+            }
+
+            if (data.blocked) {
+                showBlockedState(ticketCode, data.attempts);
+                return;
+            }
+        } catch (e) {
+            console.warn("Status poll error:", e);
+        }
+
+        if (pollCount >= maxPolls) {
+            stopPaymentStatusPolling();
+            const statusEl = document.getElementById('stk-status-text');
+            if (statusEl) {
+                statusEl.innerHTML = `<span class="text-slate-400">Still waiting? Enter M-Pesa code below or resend prompt.</span>`;
+            }
+            const box = document.getElementById('manual-code-box');
+            if (box) box.classList.remove('hidden');
+        }
+    }, 2500);
+}
+
+function stopPaymentStatusPolling() {
+    if (paymentPollInterval) {
+        clearInterval(paymentPollInterval);
+        paymentPollInterval = null;
+    }
+}
+
+function toggleManualCodeBox() {
+    const box = document.getElementById('manual-code-box');
+    const icon = document.getElementById('manual-toggle-icon');
+    if (box) {
+        box.classList.toggle('hidden');
+        if (icon) {
+            icon.classList.toggle('fa-chevron-down');
+            icon.classList.toggle('fa-chevron-up');
+        }
+    }
+}
+
+async function submitManualMpesaCode() {
+    if (!currentPendingPayment) return;
+    const codeInput = document.getElementById('manual-mpesa-code');
+    const code = codeInput ? codeInput.value.trim().toUpperCase() : '';
+    const btn = document.getElementById('manual-confirm-btn');
+
+    if (!code || code.length < 5) {
+        alert("Please enter a valid M-Pesa reference code (e.g. QWE123RTY).");
+        return;
+    }
+
+    const originalText = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i>`;
+    }
+
+    try {
+        const res = await fetch('/api/payment/manual-confirm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                ticket_code: currentPendingPayment.ticketCode,
+                mpesa_reference: code
+            })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            if (data.verified) {
+                closeStkModal();
+                unlockSuccessModal(currentPendingPayment.ticketCode, data.registration, code);
+            } else {
+                alert(data.message || "Code submitted! Awaiting verification.");
+                const statusEl = document.getElementById('stk-status-text');
+                if (statusEl) {
+                    statusEl.innerText = `Code ${code} submitted. Awaiting verification...`;
+                }
+            }
+        } else {
+            alert(data.error || "Could not confirm payment with this reference.");
+        }
+    } catch (err) {
+        alert("Network error confirming payment. Please check your connection.");
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    }
+}
+
+async function resendStkPush() {
+    if (!currentPendingPayment) return;
+    const btn = document.getElementById('stk-resend-btn');
+    const statusEl = document.getElementById('stk-status-text');
+    const originalText = btn ? btn.innerHTML : '';
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Resending...`;
+    }
+    if (statusEl) statusEl.innerText = "Resending M-Pesa STK prompt...";
+
+    try {
+        const res = await fetch('/api/tinypesa/stk-push', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                ticket_code: currentPendingPayment.ticketCode,
+                phone_number: currentPendingPayment.phone
+            })
+        });
+        const data = await res.json();
+        if (data.blocked) {
+            showBlockedState(currentPendingPayment.ticketCode, data.attempts);
+            return;
+        }
+        if (data.success) {
+            if (statusEl) statusEl.innerText = "New prompt sent! Check your phone and enter your PIN.";
+            const attEl = document.getElementById('stk-attempts-counter');
+            if (attEl && data.attempts) attEl.innerText = `Attempt ${data.attempts} of 4`;
+        } else {
+            if (statusEl) statusEl.innerHTML = `<span class="text-rose-400">${data.error || 'Resend failed.'}</span>`;
+        }
+    } catch (e) {
+        if (statusEl) statusEl.innerText = "Error resending prompt. Please use code verification.";
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    }
+}
+
 // ==========================================
-// VERIFY PAYMENT & INSTANT TICKET ISSUANCE
+// UNLOCK TICKET & SHOW CELEBRATION MODAL
 // ==========================================
+function unlockSuccessModal(ticketCode, registration, mpesaReference) {
+    // Trigger celebratory Confetti!
+    if (window.confetti) {
+        confetti({
+            particleCount: 140,
+            spread: 90,
+            origin: { y: 0.6 }
+        });
+    }
+
+    const reg = registration || {};
+    const tCode = ticketCode || reg.ticket_code || '--';
+    
+    const tkEl = document.getElementById('modal-ticket-code');
+    const nameEl = document.getElementById('modal-participant-name');
+    const catEl = document.getElementById('modal-category');
+    const amtEl = document.getElementById('modal-amount');
+    const refEl = document.getElementById('modal-intasend-ref');
+
+    if (tkEl) tkEl.innerText = tCode;
+    if (nameEl) nameEl.innerText = reg.full_name || '--';
+    if (catEl) catEl.innerText = reg.category_label || '--';
+    if (amtEl) amtEl.innerText = `KSh ${(reg.amount_due || 0).toLocaleString()}`;
+    if (refEl) refEl.innerText = mpesaReference || reg.mpesa_reference || reg.tinypesa_reference || '--';
+
+    // Instant Download & Pass Links
+    const dlBtn = document.getElementById('modal-download-ticket-btn');
+    const vwBtn = document.getElementById('modal-view-ticket-btn');
+    if (dlBtn) dlBtn.href = `/ticket/${tCode}?download=1`;
+    if (vwBtn) vwBtn.href = `/ticket/${tCode}`;
+
+    const modal = document.getElementById('success-modal');
+    if (modal) modal.classList.remove('hidden');
+
+    // Reset registration form
+    const form = document.getElementById('registration-form');
+    if (form) form.reset();
+    if (typeof onCategoryChanged === 'function') onCategoryChanged();
+}
+
 async function verifyAndUnlockTicket(reference, ticketCode, mpesaReference) {
     try {
         const res = await fetch('/api/intasend/verify', {
@@ -487,33 +706,7 @@ async function verifyAndUnlockTicket(reference, ticketCode, mpesaReference) {
             return;
         }
 
-        // Trigger celebratory Confetti!
-        if (window.confetti) {
-            confetti({
-                particleCount: 120,
-                spread: 80,
-                origin: { y: 0.6 }
-            });
-        }
-
-        // Update and show Instant Ticket Download Modal
-        document.getElementById('modal-ticket-code').innerText = data.ticket_code;
-        document.getElementById('modal-participant-name').innerText = data.registration.full_name;
-        document.getElementById('modal-category').innerText = data.registration.category_label;
-        document.getElementById('modal-amount').innerText = `KSh ${data.registration.amount_due.toLocaleString()}`;
-        const refEl = document.getElementById('modal-intasend-ref');
-        if (refEl) refEl.innerText = data.reference;
-
-        // Instant Download & Pass Links
-        document.getElementById('modal-download-ticket-btn').href = `/ticket/${data.ticket_code}?download=1`;
-        document.getElementById('modal-view-ticket-btn').href = `/ticket/${data.ticket_code}`;
-
-        document.getElementById('success-modal').classList.remove('hidden');
-
-        // Reset registration form
-        document.getElementById('registration-form').reset();
-        onCategoryChanged();
-
+        unlockSuccessModal(data.ticket_code, data.registration, data.reference);
     } catch (e) {
         alert("Payment received! Reference code: " + reference + ". Your ticket code is " + ticketCode);
     }

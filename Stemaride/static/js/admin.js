@@ -85,9 +85,15 @@ async function loadRegistrations() {
                         ${r.mpesa_reference ? `<div class="font-mono text-[11px] text-emerald-400 font-bold">${r.mpesa_reference}</div>` : '<div class="text-slate-500 text-[10px]">No Code</div>'}
                         <select onchange="updatePaymentStatus('${r.ticket_code}', this.value)" class="mt-1 bg-slate-950 border border-slate-700 rounded px-1.5 py-0.5 text-[10px] text-slate-300">
                             <option value="Confirmed" ${r.payment_status === 'Confirmed' ? 'selected' : ''}>Confirmed</option>
-                            <option value="Pending Verification" ${r.payment_status === 'Pending Verification' ? 'selected' : ''}>Pending</option>
+                            <option value="Pending Payment" ${r.payment_status === 'Pending Payment' ? 'selected' : ''}>Pending</option>
+                            <option value="Paid (M-Pesa)" ${r.payment_status?.includes('Paid') ? 'selected' : ''}>Paid (M-Pesa)</option>
                             <option value="Paid Cash" ${r.payment_status === 'Paid Cash' ? 'selected' : ''}>Paid Cash</option>
                         </select>
+                        ${(r.payment_blocked || (r.payment_attempts >= 4 && !r.payment_status?.includes('Paid'))) ? `
+                            <span class="bg-rose-500/20 text-rose-400 border border-rose-500/30 px-1.5 py-0.5 rounded text-[10px] font-bold block mt-1">
+                                <i class="fa-solid fa-lock mr-0.5"></i>Locked (${r.payment_attempts || 4}/4)
+                            </span>
+                        ` : ''}
                     </td>
                     <td class="py-3 px-4 text-center">
                         <button onclick="toggleCheckIn('${r.ticket_code}')" class="px-3 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 mx-auto ${checkInBtnClass}">
@@ -95,8 +101,13 @@ async function loadRegistrations() {
                             <span>${checkInText}</span>
                         </button>
                     </td>
-                    <td class="py-3 px-4 text-right">
-                        <a href="/ticket/${r.ticket_code}" target="_blank" class="text-yellow-400 hover:text-yellow-300 font-bold text-xs p-1">
+                    <td class="py-3 px-4 text-right space-x-1 whitespace-nowrap">
+                        ${(r.payment_blocked || (r.payment_attempts >= 4 && !r.payment_status?.includes('Paid'))) ? `
+                            <button onclick="unblockTicket('${r.ticket_code}')" class="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/40 px-2 py-1 rounded-lg font-bold text-xs transition inline-flex items-center gap-1" title="Unblock ticket and reset attempts to 0">
+                                <i class="fa-solid fa-lock-open text-[10px]"></i> Unblock
+                            </button>
+                        ` : ''}
+                        <a href="/ticket/${r.ticket_code}" target="_blank" class="text-yellow-400 hover:text-yellow-300 font-bold text-xs p-1 inline-flex items-center gap-1">
                             <i class="fa-solid fa-ticket"></i> Pass
                         </a>
                     </td>
@@ -134,9 +145,31 @@ async function updatePaymentStatus(ticketCode, status) {
         const data = await res.json();
         if (!data.success) {
             alert("Failed to update status");
+        } else {
+            loadRegistrations();
         }
     } catch (e) {
         alert("Server error updating payment status");
+    }
+}
+
+async function unblockTicket(ticketCode) {
+    if (!confirm(`Unblock ticket ${ticketCode}?\nThis will reset payment attempts to 0 and allow the participant to trigger M-Pesa STK push again.`)) return;
+    try {
+        const res = await fetch('/api/admin/unblock-ticket', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ticket_code: ticketCode })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert(data.message);
+            loadRegistrations();
+        } else {
+            alert(data.error || "Failed to unblock ticket");
+        }
+    } catch (e) {
+        alert("Server error unblocking ticket.");
     }
 }
 
@@ -151,8 +184,61 @@ async function refreshStats() {
             document.getElementById('kpi-equipment-hires').innerText = s.equipment_hires;
             document.getElementById('kpi-minors').innerText = s.minor_count;
             document.getElementById('kpi-checked-in').innerText = s.checked_in_count;
+            const blockedEl = document.getElementById('kpi-blocked-count');
+            if (blockedEl) blockedEl.innerText = s.blocked_count || 0;
         }
     } catch (e) {}
+}
+
+async function saveTinyPesaKeys(e) {
+    e.preventDefault();
+    const user = document.getElementById('cfg-tinypesa-user').value.trim();
+    const apiKey = document.getElementById('cfg-tinypesa-key').value.trim();
+    const btn = document.getElementById('save-tinypesa-btn');
+    const originalText = btn.innerHTML;
+
+    if (!user) {
+        alert("Please enter your TinyPesa short link username.");
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Saving...`;
+
+    try {
+        const res = await fetch('/api/admin/save-tinypesa-keys', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: user, api_key: apiKey })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert("TinyPesa configuration saved successfully! M-Pesa STK push is active.");
+            window.location.reload();
+        } else {
+            alert("Failed to save configuration: " + (data.error || "Unknown error"));
+        }
+    } catch (err) {
+        alert("Error saving TinyPesa configuration.");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+function copyWebhookUrl() {
+    const el = document.getElementById('webhook-url-text');
+    if (!el) return;
+    const text = el.innerText.trim();
+    navigator.clipboard.writeText(text).then(() => {
+        const label = document.getElementById('copy-webhook-label');
+        if (label) {
+            label.innerText = 'Copied!';
+            setTimeout(() => { label.innerText = 'Copy Webhook'; }, 2000);
+        }
+    }).catch(() => {
+        prompt("Copy this TinyPesa Webhook Callback URL:", text);
+    });
 }
 
 async function saveIntaSendKeys(e) {

@@ -43,8 +43,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <!-- QRCode.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- IntaSend Inline Popup JS SDK -->
-    <script src="https://unpkg.com/intasend-inlinejs-sdk@3.0.4/build/intasend-inline.js"></script>
+    <!-- html2pdf.js for instant PDF ticket generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Canvas Confetti for celebrations -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
@@ -74,6 +74,10 @@
                 <span>Walk KSh 500</span>
                 <span>•</span>
                 <span class="text-emerald-400 font-semibold">Bike Rental +KSh 500</span>
+                <span>•</span>
+                <a href="tel:0740853389" class="text-white hover:text-emerald-400 font-bold transition inline-flex items-center gap-1">
+                    <i class="fa-solid fa-phone text-emerald-400 text-[10px]"></i> Info: 0740 853 389
+                </a>
             </div>
         </div>
     </div>
@@ -112,6 +116,10 @@
 
                 <!-- Action CTA -->
                 <div class="hidden sm:flex items-center space-x-3">
+                    <a href="https://wa.me/254740853389?text=Hello%20STEMA%20Team%2C%20I%20would%20like%20more%20information%20about%20the%20event." target="_blank" class="hidden xl:inline-flex items-center gap-1.5 bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-emerald-400 px-3.5 py-2 rounded-full border border-slate-700 text-xs font-semibold transition">
+                        <i class="fa-brands fa-whatsapp text-emerald-400 text-sm"></i>
+                        <span>0740 853 389</span>
+                    </a>
                     <a href="{{ url_for('home') }}#register" class="btn-gleam bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-black px-6 py-2.5 rounded-full shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-105 active:scale-95 transition-all text-sm flex items-center gap-2">
                         <i class="fa-solid fa-ticket text-xs"></i>
                         <span>Register & Pay</span>
@@ -134,7 +142,10 @@
             <a href="{{ url_for('home') }}#gallery" class="block py-2 text-slate-300 hover:text-emerald-400 font-semibold mobile-nav-link"><i class="fa-solid fa-images mr-2"></i>Photo Gallery</a>
             <a href="{{ url_for('home') }}#terms" class="block py-2 text-slate-300 hover:text-emerald-400 font-semibold mobile-nav-link">Consent & Policies</a>
             <a href="{{ url_for('home') }}#find-ticket" class="block py-2 text-emerald-400 hover:text-emerald-300 font-semibold mobile-nav-link">
-                <i class="fa-solid fa-magnifying-glass mr-2"></i>Find My Registration / Pass
+                <i class="fa-solid fa-magnifying-glass mr-1.5 text-xs"></i> Find My Registration
+            </a>
+            <a href="tel:0740853389" class="block py-2 text-white font-bold text-xs bg-slate-800 px-3 rounded-xl border border-slate-700">
+                <i class="fa-solid fa-phone mr-1.5 text-emerald-400"></i> Info & Enquiries: 0740 853 389
             </a>
             <a href="{{ url_for('home') }}#register" class="block w-full text-center bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 font-black py-3 rounded-xl shadow-lg shadow-emerald-500/30 mobile-nav-link">
                 Register & Pay (KSh 700 - 1,500)
@@ -191,7 +202,7 @@
                         <li><i class="fa-solid fa-camera mr-1.5 text-cyan-400"></i> Photography consent on socials</li>
                         <li><i class="fa-solid fa-shield mr-1.5 text-emerald-400"></i> Parent/Guardian consent for minors</li>
                         <li><i class="fa-solid fa-helmet-safety mr-1.5 text-yellow-400"></i> Helmets mandatory for riders & skaters</li>
-                        <li><i class="fa-solid fa-credit-card mr-1.5 text-emerald-400"></i> Secured automated IntaSend M-Pesa & Card checkout</li>
+                        <li><i class="fa-solid fa-mobile-screen-button mr-1.5 text-emerald-400"></i> Instant automated M-Pesa STK Push via TinyPesa</li>
                     </ul>
                 </div>
 
@@ -201,10 +212,18 @@
                     <p class="text-xs text-slate-400 mb-3">
                         Never worry about lost tickets or gate mix-ups. Look up your registration anytime.
                     </p>
-                    <a href="#find-ticket" class="inline-flex items-center space-x-2 bg-slate-900 hover:bg-slate-800 text-emerald-400 font-bold px-4 py-2.5 rounded-xl border border-emerald-500/30 text-xs transition">
+                    <a href="#find-ticket" class="inline-flex items-center space-x-2 bg-slate-900 hover:bg-slate-800 text-emerald-400 font-bold px-4 py-2.5 rounded-xl border border-emerald-500/30 text-xs transition mb-4">
                         <i class="fa-solid fa-ticket"></i>
                         <span>Search Your Ticket / Phone</span>
                     </a>
+                    
+                    <div class="pt-3 border-t border-slate-800/80">
+                        <span class="text-xs font-bold text-slate-300 block mb-1">More Information / Enquiries:</span>
+                        <a href="tel:0740853389" class="text-emerald-400 hover:text-emerald-300 font-extrabold text-sm flex items-center gap-2 transition">
+                            <i class="fa-solid fa-phone"></i> 0740 853 389
+                        </a>
+                        <span class="text-[11px] text-slate-500 block mt-0.5">Call or WhatsApp for assistance</span>
+                    </div>
                 </div>
             </div>
 

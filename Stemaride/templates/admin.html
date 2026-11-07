@@ -39,7 +39,7 @@
     </div>
 
     <!-- Quick Statistics KPI Cards -->
-    <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
             <span class="text-xs text-slate-400 uppercase font-semibold">Total Registrations</span>
@@ -65,57 +65,69 @@
             <span class="text-[11px] text-slate-400">Parent consent verified</span>
         </div>
 
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 col-span-2 lg:col-span-1">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
             <span class="text-xs text-slate-400 uppercase font-semibold">Checked In Today</span>
             <div class="font-black text-3xl text-emerald-400 mt-1" id="kpi-checked-in">{{ stats.checked_in_count }}</div>
             <span class="text-[11px] text-slate-400">Gate attendance</span>
         </div>
 
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+            <span class="text-xs text-slate-400 uppercase font-semibold">Locked Tickets</span>
+            <div class="font-black text-3xl text-rose-400 mt-1" id="kpi-blocked-count">{{ stats.blocked_count or 0 }}</div>
+            <span class="text-[11px] text-slate-400">&ge; 4 failed attempts</span>
+        </div>
+
     </div>
 
-    <!-- IntaSend API Settings Card -->
+    <!-- TinyPesa M-Pesa Gateway Settings Card -->
     <div class="bg-slate-900 border border-emerald-500/30 rounded-2xl p-5 shadow-lg">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3 mb-4">
             <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm">
+                <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm font-bold">
                     <i class="fa-solid fa-mobile-screen-button"></i>
                 </div>
                 <div>
-                    <h3 class="font-bold text-sm text-white">IntaSend Payment Gateway Settings</h3>
-                    <p class="text-[11px] text-slate-400">Configure your IntaSend Publishable Key & Secret API Token for automated M-Pesa STK Push and instant ticket issuance.</p>
+                    <h3 class="font-bold text-sm text-white">TinyPesa M-Pesa STK Push Settings</h3>
+                    <p class="text-[11px] text-slate-400">Configure your TinyPesa short link username and API key for automated M-Pesa STK push and instant ticket issuance.</p>
                 </div>
             </div>
             <div class="text-xs">
-                {% if intasend_pub_key and is_live %}
-                <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2.5 py-1 rounded-full font-bold">🟢 INTASEND LIVE ACTIVE</span>
-                {% elif intasend_pub_key %}
-                <span class="bg-sky-500/20 text-sky-400 border border-sky-500/40 px-2.5 py-1 rounded-full font-bold">🟡 TEST / SANDBOX MODE</span>
+                {% if has_tinypesa %}
+                <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2.5 py-1 rounded-full font-bold">🟢 TINYPESA ACTIVE ({{ tinypesa_username }})</span>
                 {% else %}
-                <span class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2.5 py-1 rounded-full font-bold">⚙️ SETUP / PENDING VERIFICATION</span>
+                <span class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2.5 py-1 rounded-full font-bold">⚙️ SETUP REQUIRED</span>
                 {% endif %}
             </div>
         </div>
 
-        <form onsubmit="saveIntaSendKeys(event)" class="space-y-3">
+        <form onsubmit="saveTinyPesaKeys(event)" class="space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
-                <div class="md:col-span-5">
-                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">IntaSend Publishable API Key (Starts with ISPubKey_...)</label>
-                    <input type="text" id="cfg-pub-key" value="{{ intasend_pub_key }}" placeholder="ISPubKey_test_... or ISPubKey_live_..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-400">
+                <div class="md:col-span-4">
+                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">TinyPesa Username / Short Link</label>
+                    <input type="text" id="cfg-tinypesa-user" value="{{ tinypesa_username }}" placeholder="e.g. Stemaride" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-400">
                 </div>
-                <div class="md:col-span-5">
-                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">IntaSend Secret Token / Key</label>
-                    <input type="password" id="cfg-sec-key" value="{{ intasend_sec_key }}" placeholder="ISSecretKey_... or API Token" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-400">
+                <div class="md:col-span-6">
+                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">TinyPesa API Key</label>
+                    <input type="password" id="cfg-tinypesa-key" value="{{ tinypesa_api_key }}" placeholder="HqHx6yCcvMhU_..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-400">
                 </div>
                 <div class="md:col-span-2">
-                    <button type="submit" id="save-keys-btn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20">
+                    <button type="submit" id="save-tinypesa-btn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20">
                         <i class="fa-solid fa-floppy-disk"></i>
-                        <span>Save Keys</span>
+                        <span>Save Config</span>
                     </button>
                 </div>
             </div>
-            <div class="flex items-center space-x-2 pt-1 text-xs text-slate-400">
-                <input type="checkbox" id="cfg-is-live" {% if is_live %}checked{% endif %} class="w-4 h-4 rounded bg-slate-950 border-slate-700 text-emerald-500">
-                <label for="cfg-is-live" class="cursor-pointer">Enable Live Production Mode (Uncheck for Sandbox testing)</label>
+
+            <!-- Webhook URL Info for TinyPesa Dashboard -->
+            <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div>
+                    <span class="text-slate-400 block font-semibold text-[11px]">TinyPesa Callback Webhook URL:</span>
+                    <span id="webhook-url-text" class="font-mono text-emerald-400 text-[11px] break-all select-all">{{ webhook_url }}</span>
+                </div>
+                <button type="button" onclick="copyWebhookUrl()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] rounded-lg border border-slate-700 font-medium flex items-center gap-1.5 whitespace-nowrap self-start sm:self-auto">
+                    <i class="fa-solid fa-copy"></i>
+                    <span id="copy-webhook-label">Copy Webhook</span>
+                </button>
             </div>
         </form>
     </div>

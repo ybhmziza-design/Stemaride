@@ -103,7 +103,7 @@
         <span class="text-slate-600">•</span>
         <span class="text-emerald-400">🚲 Bike Hire +KSh 500</span>
         <span class="text-slate-600">•</span>
-        <span>💳 Instant M-Pesa &amp; Card via IntaSend</span>
+        <span>💳 Instant M-Pesa STK Push via TinyPesa</span>
         <span class="text-slate-600">•</span>
         <span>⚡ Scannable QR Ticket Pass</span>
         <span class="text-slate-600">•</span>
@@ -120,7 +120,7 @@
         <span class="text-slate-600">•</span>
         <span class="text-emerald-400">🚲 Bike Hire +KSh 500</span>
         <span class="text-slate-600">•</span>
-        <span>💳 Instant M-Pesa &amp; Card via IntaSend</span>
+        <span>💳 Instant M-Pesa STK Push via TinyPesa</span>
         <span class="text-slate-600">•</span>
         <span>⚡ Scannable QR Ticket Pass</span>
         <span class="text-slate-600">•</span>
@@ -524,7 +524,7 @@
                         <div>
                             <label class="block text-xs font-semibold text-slate-300 mb-1">Phone Number (M-Pesa) <span class="text-rose-500">*</span></label>
                             <input type="tel" id="phone_number" required placeholder="0712 345 678" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400">
-                            <span class="text-[11px] text-slate-400">Used for IntaSend M-Pesa STK push &amp; ticket lookup</span>
+                            <span class="text-[11px] text-slate-400">Used for TinyPesa M-Pesa STK push &amp; ticket lookup</span>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-300 mb-1">Email Address (Optional / Recommended)</label>
@@ -615,7 +615,7 @@
                     </div>
                 </div>
 
-                <!-- Payment Summary & IntaSend Checkout Box -->
+                <!-- Payment Summary & TinyPesa M-Pesa Checkout Box -->
                 <div class="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-6">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-800 gap-4">
                         <div>
@@ -626,15 +626,15 @@
                             </div>
                         </div>
 
-                        <!-- IntaSend Secured Badge -->
+                        <!-- M-Pesa STK Push Badge -->
                         <div class="bg-emerald-500/10 border border-emerald-500/30 px-4 py-2.5 rounded-xl flex items-center gap-3">
                             <div class="w-9 h-9 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">
-                                <i class="fa-solid fa-lock"></i>
+                                <i class="fa-solid fa-mobile-screen-button"></i>
                             </div>
                             <div>
-                                <span class="text-[10px] uppercase font-bold text-emerald-400 block tracking-wider">Secured by IntaSend</span>
+                                <span class="text-[10px] uppercase font-bold text-emerald-400 block tracking-wider">Instant M-Pesa STK Push</span>
                                 <span class="text-xs font-black text-white flex items-center gap-1.5">
-                                    <span>M-Pesa</span> • <span>Card</span> • <span>Bank</span>
+                                    <span class="text-emerald-400">⚡ TinyPesa</span> • <span>Direct to Phone</span>
                                 </span>
                             </div>
                         </div>
@@ -643,7 +643,7 @@
                     <div class="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
                         <div class="flex items-center gap-2">
                             <i class="fa-solid fa-qrcode text-emerald-400 text-sm"></i>
-                            <span><strong>Instant Ticket Delivery:</strong> Once payment is confirmed, your official STEMA QR pass will be issued immediately for instant download.</span>
+                            <span><strong>Instant Ticket Delivery:</strong> Once you enter your PIN, your official STEMA QR pass will be issued immediately for instant download.</span>
                         </div>
                     </div>
                 </div>
@@ -651,12 +651,12 @@
                 <!-- Submit Button -->
                 <div>
                     <button type="submit" id="submit-btn" class="btn-gleam w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-lg py-4 rounded-2xl shadow-xl shadow-emerald-500/25 hover:scale-[1.01] active:scale-[0.99] transition flex items-center justify-center gap-3">
-                        <i class="fa-solid fa-mobile-screen-button"></i>
-                        <span>PAY WITH INTASEND (M-PESA / CARD)</span>
+                        <i class="fa-solid fa-mobile-screen-button text-xl"></i>
+                        <span id="submit-btn-text">PAY VIA M-PESA (STK PUSH)</span>
                     </button>
                     <p class="text-center text-xs text-slate-400 mt-3 flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-shield-halved text-emerald-400"></i>
-                        <span>IntaSend M-Pesa STK Push &amp; Card • Zero registration mix-ups • Automated ticket pass</span>
+                        <i class="fa-solid fa-bolt text-emerald-400"></i>
+                        <span>Prompt sent directly to your phone • Zero registration mix-ups • Automated ticket pass</span>
                     </p>
                 </div>
 
@@ -676,7 +676,7 @@
 
         <div>
             <span class="bg-emerald-500/20 text-emerald-400 text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-emerald-500/30">
-                Payment Verified via IntaSend
+                Payment Verified via M-Pesa
             </span>
             <h3 class="font-display font-black text-2xl text-white mt-2">Your STEMA Ticket is Ready!</h3>
             <p class="text-xs text-slate-400 mt-1">
@@ -703,7 +703,7 @@
                 <span id="modal-amount" class="font-bold text-white">--</span>
             </div>
             <div class="flex justify-between items-center text-[11px] text-slate-500 pt-1">
-                <span>IntaSend Ref:</span>
+                <span>M-Pesa Ref / Receipt:</span>
                 <span id="modal-intasend-ref" class="font-mono text-emerald-400">--</span>
             </div>
         </div>
@@ -728,29 +728,117 @@
     </div>
 </div>
 
-<!-- IntaSend Setup / Test Modal (fallback active while awaiting verification / sandbox setup) -->
-<div id="intasend-sim-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl">
-        <div class="flex items-center justify-center gap-2 text-emerald-400 font-bold text-sm">
-            <i class="fa-solid fa-shield-halved"></i>
-            <span>IntaSend M-Pesa Checkout</span>
+<!-- TinyPesa M-Pesa STK Push Active Prompt Modal -->
+<div id="tinypesa-stk-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border-2 border-emerald-500/40 rounded-3xl max-w-md w-full p-6 sm:p-8 text-center space-y-5 shadow-2xl animate-fade-in relative">
+        
+        <!-- Normal STK Prompt State -->
+        <div id="stk-normal-container" class="space-y-5">
+            <!-- Animated Phone Prompt Graphic -->
+            <div class="relative w-20 h-20 mx-auto flex items-center justify-center">
+                <div class="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping"></div>
+                <div class="w-16 h-16 rounded-full bg-emerald-500/30 text-emerald-400 flex items-center justify-center text-2xl ring-4 ring-emerald-500/20 z-10">
+                    <i class="fa-solid fa-mobile-screen-button"></i>
+                </div>
+            </div>
+
+            <div>
+                <span class="bg-emerald-500/20 text-emerald-400 text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-emerald-500/30">
+                    M-Pesa STK Prompt Sent
+                </span>
+                <h3 class="font-display font-black text-2xl text-white mt-2">Check Your Phone</h3>
+                <p class="text-xs text-slate-300 mt-1">
+                    A prompt for <strong class="text-emerald-400 font-bold" id="stk-modal-amount">KSh 700</strong> has been sent to <span class="font-mono font-bold text-white" id="stk-modal-phone">07XXXXXXXX</span> for ticket <span class="font-mono text-emerald-400 font-bold" id="stk-modal-ticket">--</span>.
+                </p>
+                <div class="text-[11px] text-slate-400 mt-1" id="stk-attempts-counter">
+                    Attempt 1 of 4
+                </div>
+            </div>
+
+            <!-- Instructions card -->
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 text-left text-xs text-slate-300 space-y-2.5">
+                <div class="flex items-center gap-2.5 text-white">
+                    <div class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[11px] font-bold shrink-0">1</div>
+                    <span>Unlock your phone screen</span>
+                </div>
+                <div class="flex items-center gap-2.5 text-white">
+                    <div class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[11px] font-bold shrink-0">2</div>
+                    <span>Enter your <strong>M-Pesa Secret PIN</strong> to authorize payment</span>
+                </div>
+                <div class="flex items-center gap-2.5 text-white">
+                    <div class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[11px] font-bold shrink-0">3</div>
+                    <span>Your official ticket pass unlocks automatically!</span>
+                </div>
+            </div>
+
+            <!-- Live status indicator -->
+            <div class="flex items-center justify-center gap-2 text-xs text-slate-400 py-1">
+                <i class="fa-solid fa-spinner fa-spin text-emerald-400"></i>
+                <span id="stk-status-text">Waiting for M-Pesa PIN confirmation...</span>
+            </div>
+
+            <!-- Fallback Accordion / Manual code entry -->
+            <div class="pt-2 border-t border-slate-800 text-left">
+                <button type="button" onclick="toggleManualCodeBox()" class="text-xs text-slate-400 hover:text-emerald-400 transition flex items-center justify-between w-full py-1">
+                    <span>Didn't get prompt or already paid?</span>
+                    <i class="fa-solid fa-chevron-down text-[10px]" id="manual-toggle-icon"></i>
+                </button>
+                <div id="manual-code-box" class="hidden mt-3 space-y-2">
+                    <p class="text-[11px] text-slate-400">If you already completed the payment or received an M-Pesa SMS, enter your confirmation code:</p>
+                    <div class="flex gap-2">
+                        <input type="text" id="manual-mpesa-code" placeholder="e.g. QWE123RTY" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white uppercase font-mono focus:outline-none focus:border-emerald-400">
+                        <button type="button" id="manual-confirm-btn" onclick="submitManualMpesaCode()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-2 rounded-xl text-xs whitespace-nowrap">
+                            Confirm
+                        </button>
+                    </div>
+                    <div class="flex justify-between items-center pt-1">
+                        <button type="button" id="stk-resend-btn" onclick="resendStkPush()" class="text-[11px] text-emerald-400 hover:underline flex items-center gap-1">
+                            <i class="fa-solid fa-rotate-right"></i> Resend STK Prompt
+                        </button>
+                        <a href="tel:0740853389" class="text-[11px] text-slate-400 hover:text-white flex items-center gap-1">
+                            <i class="fa-solid fa-phone text-emerald-400"></i> Help: 0740 853 389
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
-        <p class="text-xs text-slate-300">
-            Confirming registration payment of <strong class="text-emerald-400" id="sim-amount">KSh 700</strong> via IntaSend M-Pesa / Card for ticket <span class="font-mono text-white" id="sim-ticket">--</span>.
-        </p>
-        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs text-left text-slate-400 space-y-1">
-            <div><strong>Payment Channel:</strong> M-Pesa STK Push / Card</div>
-            <div><strong>Currency:</strong> KES (Kenyan Shillings)</div>
-            <div><strong>Gateway:</strong> IntaSend Payments</div>
+
+        <!-- Blocked / Limit Exceeded State (after 4 failed attempts) -->
+        <div id="stk-blocked-container" class="hidden space-y-4 text-center">
+            <div class="w-16 h-16 rounded-full bg-rose-500/20 text-rose-400 mx-auto flex items-center justify-center text-3xl ring-8 ring-rose-500/10">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <div>
+                <span class="bg-rose-500/20 text-rose-400 text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-rose-500/30">
+                    Payment Locked (4 Attempts Reached)
+                </span>
+                <h3 class="font-display font-black text-2xl text-white mt-2">Ticket Locked</h3>
+                <p class="text-xs text-slate-300 mt-1">
+                    Payment for ticket <span class="font-mono text-rose-400 font-bold" id="blocked-modal-ticket">--</span> was attempted 4 times without PIN confirmation. Automated prompts have been stopped to prevent credit loss.
+                </p>
+            </div>
+
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 text-left text-xs space-y-3">
+                <div class="text-white font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-headset text-emerald-400"></i> Call or Text to Unblock & Pay:
+                </div>
+                <p class="text-slate-400 text-[11px] leading-relaxed">
+                    Contact our event team directly. We will unblock your ticket instantly or help complete your registration manually!
+                </p>
+                <div class="pt-1 flex flex-col gap-2">
+                    <a id="blocked-call-btn" href="tel:0740853389" class="btn-gleam w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-xl text-xs flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-500/20">
+                        <i class="fa-solid fa-phone text-sm"></i> Call: 0740 853 389
+                    </a>
+                    <a id="blocked-whatsapp-btn" href="https://wa.me/254740853389?text=Hello%20STEMA%20Team%2C%20please%20unblock%20my%20ticket%20so%20I%20can%20complete%20payment." target="_blank" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 border border-slate-700 transition">
+                        <i class="fa-brands fa-whatsapp text-emerald-400 text-sm"></i> WhatsApp / Text: 0740 853 389
+                    </a>
+                </div>
+            </div>
         </div>
-        <div class="space-y-2">
-            <button id="sim-confirm-btn" onclick="confirmSimulatedPayment()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-xl text-sm transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-check-circle"></i> Complete Payment & Get Ticket
-            </button>
-            <button onclick="closeSimModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold py-2 rounded-xl text-xs transition">
-                Cancel
-            </button>
-        </div>
+
+        <button type="button" onclick="closeStkModal()" class="block w-full text-slate-500 hover:text-slate-300 font-semibold py-1 text-xs transition">
+            Close / Pay Later
+        </button>
     </div>
 </div>
 
@@ -874,12 +962,36 @@
         </div>
 
     </div>
+
+    <!-- Contact & More Information Banner -->
+    <div class="mt-8 bg-gradient-to-r from-emerald-500/10 via-slate-900 to-cyan-500/10 border border-emerald-500/30 rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-4 text-left">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl shrink-0">
+                <i class="fa-solid fa-headset"></i>
+            </div>
+            <div>
+                <h4 class="font-bold text-white text-base sm:text-lg">Need More Information or Assistance?</h4>
+                <p class="text-xs text-slate-400">Have questions about bike rentals, group registrations, route details, or payments? Talk directly to our team!</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2.5 shrink-0">
+            <a href="tel:0740853389" class="btn-gleam bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs transition flex items-center gap-2 shadow-lg shadow-emerald-500/20">
+                <i class="fa-solid fa-phone"></i> Call 0740 853 389
+            </a>
+            <a href="https://wa.me/254740853389?text=Hello%20STEMA%20Team%2C%20I%20would%20like%20more%20information%20about%20the%20event." target="_blank" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition flex items-center gap-2 border border-slate-700">
+                <i class="fa-brands fa-whatsapp text-emerald-400"></i> WhatsApp
+            </a>
+        </div>
+    </div>
 </section>
 
 {% endblock %}
 
 {% block scripts %}
 <script>
+    window.SUPPORT_PHONE = "{{ support_phone or '0740853389' }}";
+    window.TINYPESA_USERNAME = "{{ tinypesa_username }}";
+    window.HAS_TINYPESA = {{ 'true' if has_tinypesa else 'false' }};
     window.INTASEND_PUBLIC_KEY = "{{ intasend_pub_key }}";
     window.INTASEND_LIVE = {{ 'true' if is_live else 'false' }};
     window.INTASEND_HAS_KEYS = {{ 'true' if has_keys else 'false' }};
