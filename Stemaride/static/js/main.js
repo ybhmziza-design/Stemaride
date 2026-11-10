@@ -125,8 +125,6 @@ function onCategoryChanged() {
         // Reset bike option to 'own' when switching to cycling
         const bikeOwnRadio = document.getElementById('bike_own');
         if (bikeOwnRadio) bikeOwnRadio.checked = true;
-        const hireDetails = document.getElementById('bicycle_hire_details');
-        if (hireDetails) hireDetails.classList.add('hidden');
         calculateTotal(700, 'Cycling Individual', 'cycling');
     } else if (category === 'skating') {
         if (promptSkating) promptSkating.classList.remove('hidden');
@@ -134,8 +132,6 @@ function onCategoryChanged() {
         // Reset skate option to 'own' when switching to skating
         const skateOwnRadio = document.getElementById('skate_own');
         if (skateOwnRadio) skateOwnRadio.checked = true;
-        const skateHireDetails = document.getElementById('skate_hire_details');
-        if (skateHireDetails) skateHireDetails.classList.add('hidden');
         calculateTotal(700, 'Skating Individual', 'skating');
     } else if (category === 'group_of_3') {
         if (promptGroup) promptGroup.classList.remove('hidden');
@@ -150,33 +146,13 @@ function onCategoryChanged() {
 
 function onBikeOptionChanged() {
     const bikeHireRadio = document.getElementById('bike_hire');
-    const hireDetails = document.getElementById('bicycle_hire_details');
     const isHire = bikeHireRadio && bikeHireRadio.checked;
-
-    if (hireDetails) {
-        if (isHire) {
-            hireDetails.classList.remove('hidden');
-        } else {
-            hireDetails.classList.add('hidden');
-        }
-    }
-
     calculateTotal(700, 'Cycling Individual', 'cycling', isHire);
 }
 
 function onSkateOptionChanged() {
     const skateHireRadio = document.getElementById('skate_hire');
-    const skateHireDetails = document.getElementById('skate_hire_details');
     const isHire = skateHireRadio && skateHireRadio.checked;
-
-    if (skateHireDetails) {
-        if (isHire) {
-            skateHireDetails.classList.remove('hidden');
-        } else {
-            skateHireDetails.classList.add('hidden');
-        }
-    }
-
     calculateTotal(700, 'Skating Individual', 'skating', isHire);
 }
 
@@ -299,19 +275,9 @@ async function handleRegistration(e) {
     const hireDetails = {};
     if (needsHire) {
         if (selectedCategory === 'cycling') {
-            const itemEl = document.getElementById('hire_item_type');
-            const sizeEl = document.getElementById('hire_shoe_size');
-            const kitEl = document.getElementById('hire_safety_kit');
-            hireDetails.hire_item = itemEl ? itemEl.value : 'Bicycle';
-            hireDetails.size = sizeEl && sizeEl.value.trim() ? sizeEl.value.trim() : 'Standard Frame';
-            hireDetails.safety_kit = kitEl ? kitEl.value : 'Helmet Included';
+            hireDetails.hire_item = 'Bicycle Hire';
         } else if (selectedCategory === 'skating') {
-            const itemEl = document.getElementById('skate_item_type');
-            const sizeEl = document.getElementById('skate_shoe_size');
-            const kitEl = document.getElementById('skate_safety_kit');
-            hireDetails.hire_item = itemEl ? itemEl.value : 'Inline Skates';
-            hireDetails.size = sizeEl && sizeEl.value.trim() ? sizeEl.value.trim() : 'Standard Skate Size';
-            hireDetails.safety_kit = kitEl ? kitEl.value : 'Helmet + Knee & Elbow Guards';
+            hireDetails.hire_item = 'Roller Skates Hire';
         }
     }
 
