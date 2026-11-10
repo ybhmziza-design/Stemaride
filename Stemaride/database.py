@@ -57,6 +57,8 @@ def init_db():
             cursor.execute("ALTER TABLE registrations ADD COLUMN payment_attempts INTEGER DEFAULT 0")
         if 'payment_blocked' not in cols:
             cursor.execute("ALTER TABLE registrations ADD COLUMN payment_blocked INTEGER DEFAULT 0")
+        if 'photo_no_consent_names' not in cols:
+            cursor.execute("ALTER TABLE registrations ADD COLUMN photo_no_consent_names TEXT")
         conn.commit()
     except Exception:
         pass
@@ -84,9 +86,9 @@ def create_registration(data):
             ticket_code, full_name, phone_number, email, category,
             category_label, amount_due, needs_hire, hire_details,
             group_members, category_details, is_minor, parent_name,
-            parent_phone, consent_photography, consent_rules,
+            parent_phone, consent_photography, photo_no_consent_names, consent_rules,
             emergency_contact, mpesa_reference, payment_status, checked_in
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
         ticket_code,
         data.get('full_name', '').strip(),
@@ -103,6 +105,7 @@ def create_registration(data):
         data.get('parent_name', '').strip(),
         data.get('parent_phone', '').strip(),
         1 if data.get('consent_photography') else 0,
+        data.get('photo_no_consent_names', '').strip(),
         1 if data.get('consent_rules') else 0,
         data.get('emergency_contact', '').strip(),
         data.get('mpesa_reference', '').strip().upper(),
@@ -240,7 +243,8 @@ def increment_payment_attempts(ticket_code, reason=None):
         return None
     
     current_attempts = (row['payment_attempts'] or 0) + 1
-    is_blocked = 1 if current_attempts >= 4 else (row['payment_blocked'] or 0)
+    # Allow 4 attempts total (1, 2, 3, 4). Block when exceeding 4 attempts.
+    is_blocked = 1 if current_attempts > 4 else (row['payment_blocked'] or 0)
     
     cursor.execute("""
         UPDATE registrations 
@@ -253,6 +257,41 @@ def increment_payment_attempts(ticket_code, reason=None):
     updated = cursor.fetchone()
     conn.close()
     return dict(updated) if updated else None
+
+def lock_ticket(ticket_code, reason=None):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE registrations 
+        SET payment_blocked = 1
+        WHERE UPPER(ticket_code) = UPPER(?)
+    """, (ticket_code.strip(),))
+    conn.commit()
+    cursor.execute("SELECT * FROM registrations WHERE UPPER(ticket_code) = UPPER(?)", (ticket_code.strip(),))
+    updated = cursor.fetchone()
+    conn.close()
+    return dict(updated) if updated else None
+
+def get_pending_registration_by_phone(phone):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    p = (phone or '').strip()
+    alt_p = ''
+    if p.startswith('0') and len(p) == 10:
+        alt_p = '254' + p[1:]
+    elif p.startswith('254') and len(p) == 12:
+        alt_p = '0' + p[3:]
+    elif p.startswith('+254') and len(p) == 13:
+        alt_p = '0' + p[4:]
+    cursor.execute("""
+        SELECT * FROM registrations 
+        WHERE (phone_number = ? OR phone_number = ? OR phone_number = ?)
+          AND (payment_status NOT LIKE '%Paid%' AND payment_status != 'Confirmed')
+        ORDER BY id DESC LIMIT 1
+    """, (p, alt_p or p, p))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
 
 def unblock_ticket(ticket_code):
     conn = get_db_connection()

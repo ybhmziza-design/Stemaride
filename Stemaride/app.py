@@ -76,7 +76,7 @@ def get_tinypesa_config():
                '').strip()
     username = (os.environ.get('TINYPESA_USERNAME') or 
                 env.get('TINYPESA_USERNAME') or 
-                'Stemaride').strip()
+                'stemaride').strip()
     return {
         'api_key': api_key,
         'username': username,
@@ -241,9 +241,29 @@ def api_register():
         if not full_name or not phone_number or not category:
             return jsonify({'success': False, 'error': 'Name, phone number, and category are required.'}), 400
         
-        # Validation for terms & conditions
-        if not data.get('consent_photography') or not data.get('consent_rules') or not data.get('consent_liability'):
-            return jsonify({'success': False, 'error': 'You must accept all terms and conditions including the liability waiver.'}), 400
+        # Validation for terms & conditions (Rules & Liability Waiver are mandatory)
+        if not data.get('consent_rules') or not data.get('consent_liability'):
+            return jsonify({'success': False, 'error': 'You must accept the safety regulations and liability waiver to proceed.'}), 400
+            
+        # Photography consent: if declined, participant's name(s) must be provided
+        consents_to_photo = bool(data.get('consent_photography'))
+        photo_names = (data.get('photo_no_consent_names') or '').strip()
+        if not consents_to_photo and not photo_names:
+            return jsonify({'success': False, 'error': 'Please enter the name(s) of the participant(s) who do not consent to photography.'}), 400
+
+        # Check if this phone number already has a locked / blocked ticket
+        existing_pending = database.get_pending_registration_by_phone(phone_number)
+        if existing_pending:
+            attempts = existing_pending.get('payment_attempts') or 0
+            if existing_pending.get('payment_blocked') == 1 or attempts >= 4:
+                return jsonify({
+                    'success': False,
+                    'blocked': True,
+                    'ticket_code': existing_pending['ticket_code'],
+                    'attempts': attempts,
+                    'support_phone': SUPPORT_PHONE,
+                    'error': f'Phone number {phone_number} has reached the limit of 4 payment attempts. To prevent credit loss, ticket {existing_pending["ticket_code"]} is locked. Please call or text {SUPPORT_PHONE} to unblock.'
+                }), 403
             
         # Minor validation
         if data.get('is_minor'):
@@ -383,9 +403,14 @@ def tinypesa_stk_push():
             res_json = resp.json() if resp.text else {}
         except Exception as req_err:
             app.logger.error(f"TinyPesa request error: {req_err}")
+            is_now_blocked = current_attempts > 4
             return jsonify({
                 'success': False,
-                'error': f'Could not reach TinyPesa gateway: {str(req_err)}'
+                'attempts': current_attempts,
+                'blocked': is_now_blocked,
+                'ticket_code': ticket_code,
+                'support_phone': SUPPORT_PHONE,
+                'error': f'Could not reach M-Pesa gateway. Attempt {current_attempts}/4 recorded. Please try again shortly.'
             }), 502
         
         if resp.status_code in [200, 201] and (res_json.get('success') is True or res_json.get('request_id')):
@@ -411,6 +436,52 @@ def tinypesa_stk_push():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/tinypesa/test-push', methods=['POST'])
+def tinypesa_test_push():
+    try:
+        data = request.get_json() or {}
+        phone = data.get('phone_number', '').strip() or SUPPORT_PHONE
+        amount = int(data.get('amount', 20))
+        
+        formatted_phone = format_phone_tinypesa(phone)
+        if not formatted_phone or len(formatted_phone) < 10:
+            return jsonify({'success': False, 'error': 'A valid Kenyan phone number (e.g. 0712345678) is required.'}), 400
+            
+        tinypesa_cfg = get_tinypesa_config()
+        if not tinypesa_cfg['api_key'] or not tinypesa_cfg['username']:
+            return jsonify({'success': False, 'error': 'TinyPesa API key or username is not configured.'}), 400
+            
+        url = f"https://api.tinypesa.com/api/v1/express/initialize/?username={tinypesa_cfg['username']}"
+        headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Apikey': tinypesa_cfg['api_key']
+        }
+        payload = {
+            'amount': amount,
+            'msisdn': formatted_phone,
+            'account_no': 'TEST-20KSH'
+        }
+        
+        app.logger.info(f"Triggering TinyPesa Test STK push to {formatted_phone} for KSh {amount}")
+        resp = requests.post(url, json=payload, headers=headers, timeout=15)
+        res_json = resp.json() if resp.text else {}
+        
+        if resp.status_code in [200, 201] and (res_json.get('success') is True or res_json.get('request_id')):
+            return jsonify({
+                'success': True,
+                'phone': phone,
+                'formatted_phone': formatted_phone,
+                'amount': amount,
+                'request_id': res_json.get('request_id') or res_json.get('id') or '',
+                'message': f'M-Pesa STK Prompt for KSh {amount} sent to {phone}! Check your phone.'
+            })
+        else:
+            err_msg = res_json.get('message') or res_json.get('error') or resp.text or 'STK push failed.'
+            return jsonify({'success': False, 'error': f'TinyPesa response: {err_msg}'}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/api/tinypesa/webhook', methods=['POST'])
 def tinypesa_webhook():
     try:
@@ -419,21 +490,33 @@ def tinypesa_webhook():
         
         body = payload.get('Body', {})
         stk_callback = body.get('stkCallback', {}) if isinstance(body, dict) else {}
-        result_code = stk_callback.get('ResultCode')
         
+        # Check ResultCode in Daraja stkCallback or flat payload
+        result_code = None
+        if isinstance(stk_callback, dict) and 'ResultCode' in stk_callback:
+            result_code = stk_callback.get('ResultCode')
+        elif 'ResultCode' in payload:
+            result_code = payload.get('ResultCode')
+        elif payload.get('status') == 'success' or payload.get('is_complete') is True:
+            result_code = 0
+            
         ext_ref = (payload.get('ExternalReference') or 
+                   payload.get('external_reference') or
+                   payload.get('account_no') or
                    stk_callback.get('ExternalReference') or 
                    (body.get('ExternalReference') if isinstance(body, dict) else None) or '').strip()
         
         tinypesa_id = (payload.get('TinyPesaID') or 
+                       payload.get('id') or
                        stk_callback.get('TinyPesaID') or 
                        (body.get('TinyPesaID') if isinstance(body, dict) else None) or '').strip()
         
         msisdn = (payload.get('Msisdn') or 
+                  payload.get('msisdn') or
                   stk_callback.get('Msisdn') or 
                   (body.get('Msisdn') if isinstance(body, dict) else None) or '').strip()
         
-        mpesa_receipt = ''
+        mpesa_receipt = payload.get('MpesaReceiptNumber') or payload.get('ref_no') or payload.get('mpesa_reference') or ''
         meta_items = stk_callback.get('CallbackMetadata', {}).get('Item', [])
         for item in meta_items:
             if isinstance(item, dict):
@@ -462,6 +545,8 @@ def tinypesa_webhook():
             app.logger.warning(f"TinyPesa callback non-zero ResultCode: {result_code} - {desc}")
             if ticket_code:
                 updated_reg = database.increment_payment_attempts(ticket_code, reason=desc)
+                if updated_reg and (updated_reg.get('payment_attempts') or 0) >= 4:
+                    database.lock_ticket(ticket_code, reason=desc)
                 app.logger.warning(f"Ticket {ticket_code} payment failed: {desc}. Attempts: {updated_reg.get('payment_attempts') if updated_reg else '?'}")
             return jsonify({'status': 'cancelled_or_failed', 'message': desc}), 200
     except Exception as e:
@@ -475,8 +560,34 @@ def payment_status(ticket_code):
         return jsonify({'success': False, 'error': 'Ticket not found'}), 404
         
     is_paid = reg['payment_status'] and ('Paid' in reg['payment_status'] or reg['payment_status'] == 'Confirmed')
+    
+    # Active fallback verification with TinyPesa API:
+    # If not yet marked paid in local DB (e.g. webhook delayed or unreachable on localhost),
+    # query TinyPesa directly in real time to check if payment succeeded
+    if not is_paid:
+        tinypesa_cfg = get_tinypesa_config()
+        if tinypesa_cfg['has_keys']:
+            try:
+                check_url = f"https://api.tinypesa.com/api/v1/express/get_status/{ticket_code}/?username={tinypesa_cfg['username']}"
+                headers = {
+                    'Accept': 'application/json',
+                    'Apikey': tinypesa_cfg['api_key']
+                }
+                resp = requests.get(check_url, headers=headers, timeout=5)
+                if resp.status_code == 200:
+                    tp_data = resp.json() or {}
+                    if tp_data.get('is_complete') is True or tp_data.get('status') == 'success':
+                        ref_no = tp_data.get('ref_no') or tp_data.get('id') or ''
+                        tinypesa_id = tp_data.get('id') or ref_no
+                        reg = database.mark_paid_tinypesa(ticket_code, ref_no, tinypesa_id)
+                        is_paid = True
+                        app.logger.info(f"Payment auto-reconciled via TinyPesa get_status for {ticket_code} with ref {ref_no}")
+            except Exception as e:
+                app.logger.warning(f"TinyPesa status check fallback error for {ticket_code}: {e}")
+
     attempts = reg.get('payment_attempts') or 0
-    is_blocked = bool(reg.get('payment_blocked') == 1 or attempts >= 4)
+    # Blocked if explicitly locked (or exceeded 4 attempts)
+    is_blocked = bool(reg.get('payment_blocked') == 1 or attempts > 4)
     return jsonify({
         'success': True,
         'paid': bool(is_paid),

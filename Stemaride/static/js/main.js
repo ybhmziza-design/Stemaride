@@ -68,6 +68,40 @@ function selectCategory(category) {
     }
 }
 
+let userPhotoConsent = true;
+
+function setPhotoConsent(consents) {
+    userPhotoConsent = consents;
+    const checkbox = document.getElementById('consent_photography');
+    const yesBtn = document.getElementById('photo-consent-yes');
+    const noBtn = document.getElementById('photo-consent-no');
+    const nameBox = document.getElementById('photo-no-consent-name');
+    const namesInput = document.getElementById('photo_no_consent_names');
+
+    if (checkbox) checkbox.checked = consents;
+
+    if (consents) {
+        if (yesBtn) {
+            yesBtn.className = 'flex-1 py-1.5 px-3 rounded-xl text-xs font-bold border transition bg-emerald-500/20 border-emerald-500/50 text-emerald-400';
+        }
+        if (noBtn) {
+            noBtn.className = 'flex-1 py-1.5 px-3 rounded-xl text-xs font-bold border transition bg-slate-900 border-slate-700 text-slate-400 hover:border-amber-500/50 hover:text-amber-400';
+        }
+        if (nameBox) nameBox.classList.add('hidden');
+    } else {
+        if (noBtn) {
+            noBtn.className = 'flex-1 py-1.5 px-3 rounded-xl text-xs font-bold border transition bg-amber-500/20 border-amber-500/50 text-amber-400';
+        }
+        if (yesBtn) {
+            yesBtn.className = 'flex-1 py-1.5 px-3 rounded-xl text-xs font-bold border transition bg-slate-900 border-slate-700 text-slate-400 hover:border-emerald-500/50 hover:text-emerald-400';
+        }
+        if (nameBox) {
+            nameBox.classList.remove('hidden');
+            setTimeout(() => { if (namesInput) namesInput.focus(); }, 100);
+        }
+    }
+}
+
 function onCategoryChanged() {
     const selectedRadio = document.querySelector('input[name="category"]:checked');
     if (!selectedRadio) return;
@@ -221,18 +255,29 @@ async function handleRegistration(e) {
     const submitBtn = document.getElementById('submit-btn');
     const originalBtnText = submitBtn ? submitBtn.innerHTML : 'PAY WITH INTASEND';
 
-    // Consent validation
-    const consentPhoto = document.getElementById('consent_photography');
+    // Terms & Conditions validation (Rules & Liability are mandatory)
     const consentRules = document.getElementById('consent_rules');
     const consentLiability = document.getElementById('consent_liability');
 
-    if (!consentPhoto || !consentPhoto.checked || !consentRules || !consentRules.checked) {
-        alert("Please accept both the Photography Consent policy and Safety Regulations to proceed.");
+    if (!consentRules || !consentRules.checked) {
+        alert("Please accept the Safety Regulations and Helmet Guidelines to proceed.");
         return;
     }
     if (!consentLiability || !consentLiability.checked) {
-        alert("Please accept the Liability Waiver to proceed with registration.");
+        alert("Please accept the Liability Waiver & Assumption of Risk to proceed with registration.");
         return;
+    }
+
+    // Photography consent check — if declined, name(s) must be provided
+    let photoNames = '';
+    if (!userPhotoConsent) {
+        const noNamesInput = document.getElementById('photo_no_consent_names');
+        photoNames = noNamesInput ? noNamesInput.value.trim() : '';
+        if (!photoNames) {
+            alert("Please enter the name(s) of the participant(s) who do not consent to photography.");
+            if (noNamesInput) noNamesInput.focus();
+            return;
+        }
     }
 
     const selectedRadio = document.querySelector('input[name="category"]:checked');
@@ -329,7 +374,8 @@ async function handleRegistration(e) {
         parent_name: (isMinor && parentNameEl) ? parentNameEl.value.trim() : '',
         parent_phone: (isMinor && parentPhoneEl) ? parentPhoneEl.value.trim() : '',
         emergency_contact: emergencyEl ? emergencyEl.value.trim() : '',
-        consent_photography: consentPhoto.checked,
+        consent_photography: userPhotoConsent,
+        photo_no_consent_names: userPhotoConsent ? '' : photoNames,
         consent_rules: consentRules.checked,
         consent_liability: consentLiability ? consentLiability.checked : false
     };
@@ -349,6 +395,10 @@ async function handleRegistration(e) {
         const data = await response.json();
 
         if (!data.success) {
+            if (data.blocked) {
+                showBlockedState(data.ticket_code, data.attempts);
+                return;
+            }
             alert(data.error || 'Registration failed. Please check inputs.');
             if (submitBtn) {
                 submitBtn.disabled = false;
@@ -426,6 +476,14 @@ async function initiateTinyPesaPayment(regData, payload) {
                 attEl.innerText = `Attempt ${data.attempts} of 4`;
             }
         } else {
+            const attEl = document.getElementById('stk-attempts-counter');
+            if (attEl && data.attempts) {
+                attEl.innerText = `Attempt ${data.attempts} of 4`;
+            }
+            if (data.blocked) {
+                showBlockedState(ticketCode, data.attempts);
+                return;
+            }
             if (stkStatus) {
                 stkStatus.innerHTML = `<span class="text-amber-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i> ${data.error || 'STK push failed.'}</span>`;
             }
@@ -624,14 +682,24 @@ async function resendStkPush() {
             })
         });
         const data = await res.json();
+        const attEl = document.getElementById('stk-attempts-counter');
+        if (attEl && data.attempts) {
+            attEl.innerText = data.attempts >= 4 ? 'Attempt 4 of 4 (Final Attempt)' : `Attempt ${data.attempts} of 4`;
+        }
+
         if (data.blocked) {
             showBlockedState(currentPendingPayment.ticketCode, data.attempts);
             return;
         }
+
+        if (data.attempts >= 4 && btn) {
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-lock mr-1"></i> 4 of 4 Prompts Sent`;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+
         if (data.success) {
-            if (statusEl) statusEl.innerText = "New prompt sent! Check your phone and enter your PIN.";
-            const attEl = document.getElementById('stk-attempts-counter');
-            if (attEl && data.attempts) attEl.innerText = `Attempt ${data.attempts} of 4`;
+            if (statusEl) statusEl.innerText = data.attempts >= 4 ? "Final prompt sent! Please enter your PIN on your phone." : "New prompt sent! Check your phone and enter your PIN.";
         } else {
             if (statusEl) statusEl.innerHTML = `<span class="text-rose-400">${data.error || 'Resend failed.'}</span>`;
         }

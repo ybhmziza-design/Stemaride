@@ -579,14 +579,35 @@
 
                     <div class="space-y-3 text-xs">
                         
-                        <!-- Checkbox 1: Photography Consent -->
-                        <label class="flex items-start space-x-3 cursor-pointer group">
-                            <input type="checkbox" id="consent_photography" required checked class="mt-0.5 w-4 h-4 rounded bg-slate-900 border-slate-700 text-emerald-400 focus:ring-0">
-                            <div class="text-slate-300 leading-snug">
-                                <strong class="text-emerald-400 font-bold">Photography & Media Release:</strong>
-                                I/We explicitly accept that photographs and videos may be taken during the event and posted on official social media platforms and promotional channels for STEMA.
+                        <!-- Photography Consent — Button Toggle -->
+                        <div class="space-y-2">
+                            <div class="flex items-start gap-2.5">
+                                <div class="mt-0.5 w-4 h-4 shrink-0 rounded bg-emerald-500/20 flex items-center justify-center">
+                                    <i class="fa-solid fa-camera text-emerald-400 text-[9px]"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-slate-300 leading-snug">
+                                        <strong class="text-emerald-400 font-bold">Photography & Media Release:</strong>
+                                        Photographs and videos may be taken during the event and posted on official STEMA social media and promotional channels.
+                                    </p>
+                                    <input type="checkbox" id="consent_photography" class="sr-only" checked>
+                                    <div class="flex gap-2 mt-2">
+                                        <button type="button" id="photo-consent-yes" onclick="setPhotoConsent(true)"
+                                            class="flex-1 py-1.5 px-3 rounded-xl text-xs font-bold border transition bg-emerald-500/20 border-emerald-500/50 text-emerald-400">
+                                            <i class="fa-solid fa-check mr-1"></i> I Consent
+                                        </button>
+                                        <button type="button" id="photo-consent-no" onclick="setPhotoConsent(false)"
+                                            class="flex-1 py-1.5 px-3 rounded-xl text-xs font-bold border transition bg-slate-900 border-slate-700 text-slate-400 hover:border-amber-500/50 hover:text-amber-400">
+                                            <i class="fa-solid fa-xmark mr-1"></i> Do Not Consent
+                                        </button>
+                                    </div>
+                                    <div id="photo-no-consent-name" class="hidden mt-2 space-y-1">
+                                        <p class="text-[11px] text-amber-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Please enter the name(s) of participants who do not consent so they can be excluded from media releases:</p>
+                                        <input type="text" id="photo_no_consent_names" placeholder="e.g. John Doe, Jane Doe" class="w-full bg-slate-950 border border-amber-500/40 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400">
+                                    </div>
+                                </div>
                             </div>
-                        </label>
+                        </div>
 
                         <!-- Checkbox 2: Safety Guidelines -->
                         <label class="flex items-start space-x-3 cursor-pointer group">

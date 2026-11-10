@@ -55,6 +55,9 @@ async function loadRegistrations() {
             if (r.is_minor) {
                 details.push(`<span class="text-amber-400 font-bold">Minor:</span> Guardian: ${r.parent_name || 'N/A'} (${r.parent_phone || ''})`);
             }
+            if (r.consent_photography === 0 || r.photo_no_consent_names) {
+                details.push(`<span class="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1.5 py-0.5 rounded text-[10px] font-bold inline-block mt-0.5"><i class="fa-solid fa-ban mr-1"></i>No Photo: ${r.photo_no_consent_names || r.full_name}</span>`);
+            }
             if (details.length === 0) {
                 details.push(`<span class="text-slate-500">Standard Solo</span>`);
             }
@@ -447,3 +450,52 @@ document.addEventListener('DOMContentLoaded', () => {
     checkR2Status();
     loadAdminGallery();
 });
+
+async function sendAdminTestStkPush() {
+    const phoneInput = document.getElementById('test-stk-phone');
+    const amountInput = document.getElementById('test-stk-amount');
+    const resultBox = document.getElementById('test-stk-result');
+    const btn = document.getElementById('test-stk-btn');
+
+    const phone = phoneInput ? phoneInput.value.trim() : '';
+    const amount = amountInput ? parseInt(amountInput.value) || 20 : 20;
+
+    if (!phone) {
+        alert("Please enter a valid phone number to test.");
+        return;
+    }
+
+    const origHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Sending...`;
+    if (resultBox) {
+        resultBox.classList.remove('hidden', 'text-rose-400', 'text-emerald-400');
+        resultBox.classList.add('text-slate-400');
+        resultBox.innerText = `Connecting to TinyPesa... requesting prompt for KSh ${amount}...`;
+    }
+
+    try {
+        const res = await fetch('/api/tinypesa/test-push', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone_number: phone, amount })
+        });
+        const data = await res.json();
+        if (data.success) {
+            resultBox.classList.remove('text-slate-400');
+            resultBox.classList.add('text-emerald-400');
+            resultBox.innerHTML = `✅ <strong>Success!</strong> ${data.message}`;
+        } else {
+            resultBox.classList.remove('text-slate-400');
+            resultBox.classList.add('text-rose-400');
+            resultBox.innerHTML = `❌ <strong>Failed:</strong> ${data.error || 'STK Push could not be initiated.'}`;
+        }
+    } catch (err) {
+        resultBox.classList.remove('text-slate-400');
+        resultBox.classList.add('text-rose-400');
+        resultBox.innerHTML = `❌ <strong>Network Error:</strong> ${err.message}`;
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
+    }
+}
