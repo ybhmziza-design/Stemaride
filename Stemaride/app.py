@@ -73,7 +73,7 @@ def get_tinypesa_config():
     env = load_env()
     api_key = (os.environ.get('TINYPESA_API_KEY') or 
                env.get('TINYPESA_API_KEY') or 
-               '').strip()
+               '-8lP8ALK_Y1l1tKM4nAPqQVJnlKlA6y7K-WB5REj').strip()
     username = (os.environ.get('TINYPESA_USERNAME') or 
                 env.get('TINYPESA_USERNAME') or 
                 'stemaride').strip()
@@ -673,6 +673,11 @@ def save_tinypesa_keys():
         
         if not username:
             return jsonify({'success': False, 'error': 'TinyPesa username is required'}), 400
+            
+        if api_key:
+            os.environ['TINYPESA_API_KEY'] = api_key
+        if username:
+            os.environ['TINYPESA_USERNAME'] = username
             
         update_env_file({
             'TINYPESA_API_KEY': api_key,
